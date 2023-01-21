@@ -10,7 +10,6 @@ This is the first version, developed by Ahmad Ataka (Twitter: @ahmadataka, Websi
 
 ### How do I get set up? ###
 
-You need:
 * Python3, including basic libraries such as Numpy, Matplotlib.
 * Gym by OpenAI (https://github.com/openai/gym) to setup the model of Latto-latto
 * Stable Baselines3 (https://github.com/DLR-RM/stable-baselines3) to implement Deep Reinforcement Learning, especially PPO.
