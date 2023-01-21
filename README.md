@@ -1,6 +1,4 @@
-# README #
-
-Latto-latto control based on Deep Reinforcement Learning
+# LATTO-LATTO CONTROL BASED ON DEEP REINFORCEMENT LEARNING #
 
 ### What is this repository for? ###
 
