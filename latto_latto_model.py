@@ -82,14 +82,14 @@ class LattoLatto(gym.Env):
         return np.array([self.state])
 
     def draw_line(self, pose_point, pose_ball_left, pose_ball_right):
-        point_num = 10
-        delta_x_left = (pose_ball_left[0]-pose_point[0])/point_num
-        delta_y_left = (pose_ball_left[1]-pose_point[1])/point_num
-        delta_x_right = (pose_ball_right[0]-pose_point[0])/point_num
-        delta_y_right = (pose_ball_right[1]-pose_point[1])/point_num
-        for i in range(0, point_num+1):
-            plt.scatter(pose_point[0]+delta_x_left*i, pose_point[1]+delta_y_left*i, color='blue')
-            plt.scatter(pose_point[0]+delta_x_right*i, pose_point[1]+delta_y_right*i, color='green')
+        x = [pose_point[0], pose_ball_left[0]]
+        y = [pose_point[1], pose_ball_left[1]]
+        plt.plot(x,y,color='black')
+        x = [pose_point[0], pose_ball_right[0]]
+        y = [pose_point[1], pose_ball_right[1]]
+        plt.plot(x,y,color='black')
+        plt.scatter(pose_ball_left[0], pose_ball_left[1], color='blue', s=100)
+        plt.scatter(pose_ball_right[0], pose_ball_right[1], color='blue', s=100)
         
     
     def render(self, mode='human'):
