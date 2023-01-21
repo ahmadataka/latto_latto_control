@@ -14,7 +14,7 @@ class LattoLatto(gym.Env):
         high = np.array([self.z_threshold, self.z_dot_threshold, self.theta_threshold, self.theta_dot_threshold],
                         dtype=np.float32)
 
-        self.max_action = 1.0
+        self.max_action = 10.0
         self.action_space = spaces.Box(-self.max_action, self.max_action, (1,))
 
         self.observation_space = spaces.Box(-high, high, shape=(4,), dtype=np.float32)
@@ -91,9 +91,9 @@ class LattoLatto(gym.Env):
         
     
     def render(self, mode='human'):
-        # plt.axis('equal')
-        plt.xlim([-self.length, self.length])
-        plt.ylim([-2*self.length, 2*self.length])
+        plt.axis('equal')
+        # plt.xlim([-self.length, self.length])
+        # plt.ylim([-2*self.length, 2*self.length])
         pose_point = [0, self.state[0]]
         pose_ball_left = [-self.length*math.sin(self.state[2]), self.state[0]-self.length*math.cos(self.state[2])]
         pose_ball_right = [self.length*math.sin(self.state[2]), self.state[0]-self.length*math.cos(self.state[2])]
