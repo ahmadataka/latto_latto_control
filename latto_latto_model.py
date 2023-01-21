@@ -47,8 +47,10 @@ class LattoLatto(gym.Env):
             collision_flag = 1
             self.collision_before = self.collision_now
             if(theta<self.small_theta):
+                theta = self.small_theta
                 self.collision_now = 0
             else:
+                theta = math.pi-self.small_theta
                 self.collision_now = 1
 
         self.state = [z, z_dot, theta, theta_dot]
@@ -93,7 +95,7 @@ class LattoLatto(gym.Env):
     def render(self, mode='human'):
         plt.axis('equal')
         # plt.xlim([-self.length, self.length])
-        # plt.ylim([-2*self.length, 2*self.length])
+        # plt.ylim([-5*self.length, 5*self.length])
         pose_point = [0, self.state[0]]
         pose_ball_left = [-self.length*math.sin(self.state[2]), self.state[0]-self.length*math.cos(self.state[2])]
         pose_ball_right = [self.length*math.sin(self.state[2]), self.state[0]-self.length*math.cos(self.state[2])]
