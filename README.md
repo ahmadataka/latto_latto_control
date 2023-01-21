@@ -1,29 +1,24 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+Latto-latto control based on Deep Reinforcement Learning
 
 ### What is this repository for? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+This is a repository on controlling a double-pendulum system with vertically-moving base points, a toy popularly known as Latto-latto in Indonesia. The control algorithm is based on deep reinforcement learning algorithm, namely the Proximal Policy Optimization (PPO).
+
+This is the first version, developed by Ahmad Ataka (Twitter: @ahmadataka, Website: ahmadataka.bitbucket.io), a lecturer at Department of Electrical and Information Engineering, Universitas Gadjah Mada, Indonesia.
 
 ### How do I get set up? ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+You need:
+* Python3, including basic libraries such as Numpy, Matplotlib.
+* Gym by OpenAI (https://github.com/openai/gym) to setup the model of Latto-latto
+* Stable Baselines3 (https://github.com/DLR-RM/stable-baselines3) to implement Deep Reinforcement Learning, especially PPO.
 
-### Contribution guidelines ###
+### What's inside the repo? ###
 
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+* latto_latto_model.py: a code consisting of Latto-latto's model in Gym environment.
+* training_latto_ppo.py: a code to train PPO in Latto-latto environment.
+* testing_latto.py: a code for testing the performance of the algorithm.
+* ppo_latto.zip: a PPO model produced by training_latto_ppo.py to generate action for Latto-latto.
+* 3007.full.pdf: some reference.
