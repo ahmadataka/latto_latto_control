@@ -24,7 +24,7 @@ class LattoLatto(gym.Env):
         self.g = 9.8
         self.length = 0.2
         self.delta_t = 0.02
-        self.friction = 1.0
+        self.friction = 0.5
         self.small_theta = 0.075
         self.collision_now = 0
         self.collision_before = 0
