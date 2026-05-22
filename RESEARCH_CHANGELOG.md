@@ -114,3 +114,23 @@ Change:
 
 Research relevance:
 - This improves the evaluation workflow by making drift, oscillation amplitude, and near-stationary collapse easier to detect visually.
+
+### Change 6: Parameterized alpha sweep for reward comparison
+
+Motivation:
+- The first drift-penalty experiment with `\alpha = 0.1` improved vertical centering, but it suppressed alternating collisions too strongly.
+- A fair next step is to compare several smaller `\alpha` values under the same PPO setup.
+
+Change:
+- `latto_latto_model.py` now accepts the vertical position penalty weight as a constructor argument.
+- Added `alpha_sweep_experiment.py` to train and evaluate PPO models for:
+  - `\alpha = 0.01`
+  - `\alpha = 0.02`
+  - `\alpha = 0.05`
+- The sweep script saves:
+  - per-alpha PPO checkpoints
+  - `alpha_sweep_results.json`
+  - `alpha_pose_comparison.png`
+
+Research relevance:
+- This turns the reward-tuning question into a reproducible experiment and directly supports comparison of `z(t)` and `\theta(t)` across reward weights.

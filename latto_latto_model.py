@@ -5,7 +5,7 @@ import math
 import matplotlib.pyplot as plt
 
 class LattoLatto(gym.Env):
-    def __init__(self):
+    def __init__(self, z_position_penalty_weight=0.1):
         super(LattoLatto, self).__init__()
         self.MAX_EPISODE = 500
         self.z_threshold = self.z_dot_threshold = 1
@@ -25,7 +25,7 @@ class LattoLatto(gym.Env):
         self.delta_t = 0.02
         self.friction = 0.5
         self.small_theta = 0.075
-        self.z_position_penalty_weight = 0.1
+        self.z_position_penalty_weight = z_position_penalty_weight
         self.collision_now = 0
         self.collision_before = 0
         self.fig = None

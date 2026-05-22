@@ -17,6 +17,7 @@ This is the first version, developed by Ahmad Ataka (Twitter: @ahmadataka, Websi
 * latto_latto_model.py: a code consisting of Latto-latto's model in Gym environment.
 * training_latto_ppo.py: a code to train PPO in Latto-latto environment.
 * testing_latto.py: a code for testing the performance of the algorithm.
+* alpha_sweep_experiment.py: a script to train and compare multiple PPO models across different vertical drift penalty weights.
 * ppo_latto.zip: a PPO model produced by training_latto_ppo.py to generate action for Latto-latto.
 * ppo_latto_z_penalty.zip: a PPO model trained with sparse reward plus vertical position penalty.
 * 3007.full.pdf: some reference.

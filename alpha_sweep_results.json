@@ -1,0 +1,26 @@
+[
+  {
+    "alpha": 0.01,
+    "model_path": "ppo_latto_alpha_0p010.zip",
+    "reward_sum": -8.19098686259262e-05,
+    "max_abs_z": 0.013322743587195873,
+    "mean_abs_z": 0.008118612349790055,
+    "alternating_collisions": 0
+  },
+  {
+    "alpha": 0.02,
+    "model_path": "ppo_latto_alpha_0p020.zip",
+    "reward_sum": -0.002055359103010801,
+    "max_abs_z": 0.047273188829422,
+    "mean_abs_z": 0.030373530958313494,
+    "alternating_collisions": 0
+  },
+  {
+    "alpha": 0.05,
+    "model_path": "ppo_latto_alpha_0p050.zip",
+    "reward_sum": -0.0010968326663562955,
+    "max_abs_z": 0.022674525156617165,
+    "mean_abs_z": 0.013029685405490455,
+    "alternating_collisions": 0
+  }
+]
