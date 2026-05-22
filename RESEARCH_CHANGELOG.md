@@ -217,3 +217,94 @@ Interpretation:
 Research relevance:
 - This is a useful negative result.
 - It suggests that model fidelity alone is not enough; the reward or controller structure likely also needs to change to sustain rhythmic impacts under dissipative collisions.
+
+### Change 9: Dead-zone reward for vertical motion and `z_tol` sweep
+
+Motivation:
+- Penalizing all vertical motion in `z` reduced the ability of the controller to pump energy into the swing.
+- A better reward should allow `z` to move freely within a small working band and only penalize excessive drift outside that band.
+
+Previous vertical penalty:
+
+\[
+r_t = r_t^{\mathrm{collision}} - \alpha z_t^2
+\]
+
+Updated vertical penalty with dead zone:
+
+\[
+r_t = r_t^{\mathrm{collision}} - \alpha \max(0, |z_t| - z_{\mathrm{tol}})^2
+\]
+
+where:
+- `z_{\mathrm{tol}}` is the allowed free-motion range for the pivot
+- no `z` penalty is applied while `|z_t| \le z_{\mathrm{tol}}`
+
+Current sweep setting:
+- `\alpha = 0.1`
+- `e = 0.9`
+- `z_{\mathrm{tol}} \in \{0.03, 0.05, 0.08\}`
+
+Implementation notes:
+- `latto_latto_model.py` now accepts `z_position_tolerance`.
+- The environment now reports `z_position_excess` through `info`.
+- Added `ztol_sweep_experiment.py` to retrain and compare PPO across tolerance values.
+
+Research relevance:
+- This is a more physically meaningful regularization scheme because it distinguishes between useful excitation motion and undesirable long-term drift.
+
+Observed outcome:
+- `z_{\mathrm{tol}} = 0.03`: `max |z| = 0.0302`, `mean |z| = 0.0160`, alternating collisions = `0`
+- `z_{\mathrm{tol}} = 0.05`: `max |z| = 0.1025`, `mean |z| = 0.0773`, alternating collisions = `0`
+- `z_{\mathrm{tol}} = 0.08`: `max |z| = 0.0469`, `mean |z| = 0.0191`, alternating collisions = `0`
+
+Interpretation:
+- The dead-zone reward clearly changed the learned `z` behavior compared with the everywhere-penalized `z^2` reward.
+- `z_{\mathrm{tol}} = 0.03` produced the tightest vertical bound, while `z_{\mathrm{tol}} = 0.08` allowed moderate motion but still stayed within the free band.
+- `z_{\mathrm{tol}} = 0.05` was the weakest of the three on vertical containment in this evaluation.
+- None of the tested tolerance values recovered alternating-collision behavior under the current reward structure.
+
+### Change 10: Sweep of collision reward weight `w_c`
+
+Motivation:
+- The dead-zone reward improved how `z` was treated, but alternating-collision behavior still did not reappear.
+- This suggested that the collision reward itself might be too weak relative to the easier low-motion strategy.
+
+Updated reward:
+
+\[
+r_t =
+w_c \, r_t^{\mathrm{collision}}
+- \alpha \max(0, |z_t| - z_{\mathrm{tol}})^2
+\]
+
+where:
+- `w_c` is the collision reward weight
+- `r_t^{\mathrm{collision}} = 1` for a valid alternating collision and `0` otherwise
+
+Current sweep setting:
+- `\alpha = 0.1`
+- `z_{\mathrm{tol}} = 0.08`
+- `e = 0.9`
+- `w_c \in \{1, 2, 5\}`
+
+Implementation notes:
+- `latto_latto_model.py` now accepts `collision_reward_weight`.
+- Added `collision_reward_sweep_experiment.py` to retrain and compare PPO across collision-reward weights.
+
+Research relevance:
+- This isolates whether the main issue is insufficient task incentive rather than only over-regularization of pivot motion.
+
+Observed outcome:
+- `w_c = 1`: `max |z| = 0.0318`, `mean |z| = 0.0160`, alternating collisions = `0`
+- `w_c = 2`: `max |z| = 0.0275`, `mean |z| = 0.0161`, alternating collisions = `0`
+- `w_c = 5`: `max |z| = 0.0070`, `mean |z| = 0.0035`, alternating collisions = `0`
+
+Interpretation:
+- Increasing the collision reward weight alone did not recover alternating-impact behavior.
+- In this sweep, larger `w_c` actually led to an even tighter low-motion solution rather than more visible rhythmic excitation.
+- This suggests the failure is not only that collision reward is too small; the agent may still need an intermediate shaping signal that rewards swing development before successful alternating impacts appear.
+
+Status:
+- This issue is not fixed yet.
+- The next stage should continue exploring different reward mechanisms, especially intermediate shaping terms that encourage swing growth before alternating collisions are achieved.

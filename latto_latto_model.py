@@ -5,7 +5,13 @@ import math
 import matplotlib.pyplot as plt
 
 class LattoLatto(gym.Env):
-    def __init__(self, z_position_penalty_weight=0.1, collision_restitution=0.9):
+    def __init__(
+        self,
+        z_position_penalty_weight=0.1,
+        z_position_tolerance=0.0,
+        collision_reward_weight=1.0,
+        collision_restitution=0.9,
+    ):
         super(LattoLatto, self).__init__()
         self.MAX_EPISODE = 500
         self.z_threshold = self.z_dot_threshold = 1
@@ -26,6 +32,8 @@ class LattoLatto(gym.Env):
         self.friction = 0.5
         self.small_theta = 0.075
         self.z_position_penalty_weight = z_position_penalty_weight
+        self.z_position_tolerance = z_position_tolerance
+        self.collision_reward_weight = collision_reward_weight
         self.collision_restitution = collision_restitution
         self.collision_now = 0
         self.collision_before = 0
@@ -71,9 +79,10 @@ class LattoLatto(gym.Env):
         sparse_reward = 0.0
         if not done:
             if collision_flag and self.collision_now != self.collision_before:
-                sparse_reward = 1.0
+                sparse_reward = self.collision_reward_weight
 
-        z_position_penalty = self.z_position_penalty_weight * (z ** 2)
+        z_position_excess = max(0.0, abs(z) - self.z_position_tolerance)
+        z_position_penalty = self.z_position_penalty_weight * (z_position_excess ** 2)
         reward = sparse_reward - z_position_penalty
 
         if not done:
@@ -87,6 +96,7 @@ class LattoLatto(gym.Env):
         info = {
             "sparse_reward": sparse_reward,
             "z_position_penalty": z_position_penalty,
+            "z_position_excess": z_position_excess,
             "collision_flag": collision_flag,
             "pre_collision_theta_dot": pre_collision_theta_dot,
             "post_collision_theta_dot": post_collision_theta_dot,
@@ -133,7 +143,8 @@ class LattoLatto(gym.Env):
         plt.pause(0.02)
         print(
             "State {}, action: {}, done: {}, reward: {}, sparse_reward: {}, "
-            "z_position_penalty: {}, collision_energy_loss: {}".format(
+            "z_position_penalty: {}, collision_energy_loss: {}, "
+            "collision_reward_weight: {}".format(
                 self.state,
                 self.act,
                 self.cur_done,
@@ -141,6 +152,7 @@ class LattoLatto(gym.Env):
                 self.cur_sparse_reward,
                 self.cur_z_position_penalty,
                 self.cur_collision_energy_loss,
+                self.collision_reward_weight,
             )
         )
 

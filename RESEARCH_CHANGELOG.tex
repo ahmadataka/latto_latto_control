@@ -279,4 +279,118 @@ This makes the environment a more meaningful hybrid impact-control benchmark. It
 \paragraph{Research relevance.}
 This is a useful negative result. It suggests that model fidelity alone is not enough; the reward or controller structure likely also needs to change to sustain rhythmic impacts under dissipative collisions.
 
+\subsection*{Change 9: Dead-Zone Reward for Vertical Motion and \texttt{z\_tol} Sweep}
+
+\paragraph{Motivation.}
+\begin{itemize}[leftmargin=1.5em]
+  \item Penalizing all vertical motion in $z$ reduced the ability of the controller to pump energy into the swing.
+  \item A better reward should allow $z$ to move freely within a small working band and only penalize excessive drift outside that band.
+\end{itemize}
+
+\paragraph{Previous vertical penalty.}
+\[
+r_t = r_t^{\mathrm{collision}} - \alpha z_t^2
+\]
+
+\paragraph{Updated vertical penalty with dead zone.}
+\[
+r_t = r_t^{\mathrm{collision}} - \alpha \max(0, |z_t| - z_{\mathrm{tol}})^2
+\]
+
+where:
+\begin{itemize}[leftmargin=1.5em]
+  \item $z_{\mathrm{tol}}$ is the allowed free-motion range for the pivot.
+  \item No $z$ penalty is applied while $|z_t| \le z_{\mathrm{tol}}$.
+\end{itemize}
+
+\paragraph{Current sweep setting.}
+\begin{itemize}[leftmargin=1.5em]
+  \item $\alpha = 0.1$
+  \item $e = 0.9$
+  \item $z_{\mathrm{tol}} \in \{0.03, 0.05, 0.08\}$
+\end{itemize}
+
+\paragraph{Implementation notes.}
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{latto\_latto\_model.py} now accepts \texttt{z\_position\_tolerance}.
+  \item The environment now reports \texttt{z\_position\_excess} through \texttt{info}.
+  \item Added \texttt{ztol\_sweep\_experiment.py} to retrain and compare PPO across tolerance values.
+\end{itemize}
+
+\paragraph{Research relevance.}
+This is a more physically meaningful regularization scheme because it distinguishes between useful excitation motion and undesirable long-term drift.
+
+\paragraph{Observed outcome.}
+\begin{itemize}[leftmargin=1.5em]
+  \item $z_{\mathrm{tol}} = 0.03$: \texttt{max |z| = 0.0302}, \texttt{mean |z| = 0.0160}, alternating collisions = \texttt{0}
+  \item $z_{\mathrm{tol}} = 0.05$: \texttt{max |z| = 0.1025}, \texttt{mean |z| = 0.0773}, alternating collisions = \texttt{0}
+  \item $z_{\mathrm{tol}} = 0.08$: \texttt{max |z| = 0.0469}, \texttt{mean |z| = 0.0191}, alternating collisions = \texttt{0}
+\end{itemize}
+
+\paragraph{Interpretation.}
+\begin{itemize}[leftmargin=1.5em]
+  \item The dead-zone reward clearly changed the learned $z$ behavior compared with the everywhere-penalized $z^2$ reward.
+  \item $z_{\mathrm{tol}} = 0.03$ produced the tightest vertical bound, while $z_{\mathrm{tol}} = 0.08$ allowed moderate motion but still stayed within the free band.
+  \item $z_{\mathrm{tol}} = 0.05$ was the weakest of the three on vertical containment in this evaluation.
+  \item None of the tested tolerance values recovered alternating-collision behavior under the current reward structure.
+\end{itemize}
+
+\subsection*{Change 10: Sweep of Collision Reward Weight $w_c$}
+
+\paragraph{Motivation.}
+\begin{itemize}[leftmargin=1.5em]
+  \item The dead-zone reward improved how $z$ was treated, but alternating-collision behavior still did not reappear.
+  \item This suggested that the collision reward itself might be too weak relative to the easier low-motion strategy.
+\end{itemize}
+
+\paragraph{Updated reward.}
+\[
+r_t =
+w_c \, r_t^{\mathrm{collision}}
+- \alpha \max(0, |z_t| - z_{\mathrm{tol}})^2
+\]
+
+where:
+\begin{itemize}[leftmargin=1.5em]
+  \item $w_c$ is the collision reward weight.
+  \item $r_t^{\mathrm{collision}} = 1$ for a valid alternating collision and $0$ otherwise.
+\end{itemize}
+
+\paragraph{Current sweep setting.}
+\begin{itemize}[leftmargin=1.5em]
+  \item $\alpha = 0.1$
+  \item $z_{\mathrm{tol}} = 0.08$
+  \item $e = 0.9$
+  \item $w_c \in \{1, 2, 5\}$
+\end{itemize}
+
+\paragraph{Implementation notes.}
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{latto\_latto\_model.py} now accepts \texttt{collision\_reward\_weight}.
+  \item Added \texttt{collision\_reward\_sweep\_experiment.py} to retrain and compare PPO across collision-reward weights.
+\end{itemize}
+
+\paragraph{Research relevance.}
+This isolates whether the main issue is insufficient task incentive rather than only over-regularization of pivot motion.
+
+\paragraph{Observed outcome.}
+\begin{itemize}[leftmargin=1.5em]
+  \item $w_c = 1$: \texttt{max |z| = 0.0318}, \texttt{mean |z| = 0.0160}, alternating collisions = \texttt{0}
+  \item $w_c = 2$: \texttt{max |z| = 0.0275}, \texttt{mean |z| = 0.0161}, alternating collisions = \texttt{0}
+  \item $w_c = 5$: \texttt{max |z| = 0.0070}, \texttt{mean |z| = 0.0035}, alternating collisions = \texttt{0}
+\end{itemize}
+
+\paragraph{Interpretation.}
+\begin{itemize}[leftmargin=1.5em]
+  \item Increasing the collision reward weight alone did not recover alternating-impact behavior.
+  \item In this sweep, larger $w_c$ actually led to an even tighter low-motion solution rather than more visible rhythmic excitation.
+  \item This suggests the failure is not only that collision reward is too small; the agent may still need an intermediate shaping signal that rewards swing development before successful alternating impacts appear.
+\end{itemize}
+
+\paragraph{Status.}
+\begin{itemize}[leftmargin=1.5em]
+  \item This issue is not fixed yet.
+  \item The next stage should continue exploring different reward mechanisms, especially intermediate shaping terms that encourage swing growth before alternating collisions are achieved.
+\end{itemize}
+
 \end{document}
