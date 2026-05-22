@@ -18,4 +18,8 @@ This is the first version, developed by Ahmad Ataka (Twitter: @ahmadataka, Websi
 * training_latto_ppo.py: a code to train PPO in Latto-latto environment.
 * testing_latto.py: a code for testing the performance of the algorithm.
 * ppo_latto.zip: a PPO model produced by training_latto_ppo.py to generate action for Latto-latto.
+* ppo_latto_z_penalty.zip: a PPO model trained with sparse reward plus vertical position penalty.
 * 3007.full.pdf: some reference.
+* RESEARCH_CHANGELOG.tex: LaTeX source for the research changelog.
+* RESEARCH_CHANGELOG.pdf: compiled PDF version of the research changelog with readable equations.
+* RESEARCH_CHANGELOG.md: working markdown notes for the changelog content.

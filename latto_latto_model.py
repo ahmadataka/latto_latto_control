@@ -3,7 +3,6 @@ from gym import spaces
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import random
 
 class LattoLatto(gym.Env):
     def __init__(self):
@@ -26,6 +25,7 @@ class LattoLatto(gym.Env):
         self.delta_t = 0.02
         self.friction = 0.5
         self.small_theta = 0.075
+        self.z_position_penalty_weight = 0.1
         self.collision_now = 0
         self.collision_before = 0
         self.fig = None
@@ -62,21 +62,26 @@ class LattoLatto(gym.Env):
             self.steps_left<0
         )    
         
-        reward = 0
+        sparse_reward = 0.0
         if not done:
-            if(collision_flag and self.collision_now!=self.collision_before):
-                reward = 1
-            else:
-                reward = 0
-        else:
-            reward = 0
+            if collision_flag and self.collision_now != self.collision_before:
+                sparse_reward = 1.0
+
+        z_position_penalty = self.z_position_penalty_weight * (z ** 2)
+        reward = sparse_reward - z_position_penalty
 
         if not done:
             self.steps_left = self.steps_left-1
         
+        self.cur_sparse_reward = sparse_reward
+        self.cur_z_position_penalty = z_position_penalty
         self.cur_reward = reward
         self.cur_done = done
-        return np.array([self.state]), reward, done, {}
+        info = {
+            "sparse_reward": sparse_reward,
+            "z_position_penalty": z_position_penalty,
+        }
+        return np.array([self.state]), reward, done, info
 
     def reset(self):
         self.state = [0, 0, math.pi/3, 0]
@@ -115,7 +120,17 @@ class LattoLatto(gym.Env):
         self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
         plt.pause(0.02)
-        print(f'State {self.state}, action: {self.act}, done: {self.cur_done}, reward: {self.cur_reward}')
+        print(
+            "State {}, action: {}, done: {}, reward: {}, sparse_reward: {}, "
+            "z_position_penalty: {}".format(
+                self.state,
+                self.act,
+                self.cur_done,
+                self.cur_reward,
+                self.cur_sparse_reward,
+                self.cur_z_position_penalty,
+            )
+        )
 
     def close(self):
         if self.fig is not None:
