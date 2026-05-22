@@ -28,6 +28,8 @@ class LattoLatto(gym.Env):
         self.small_theta = 0.075
         self.collision_now = 0
         self.collision_before = 0
+        self.fig = None
+        self.ax = None
 
     def step(self, action):
         action = np.float32(np.clip(action, -self.max_action, self.max_action))
@@ -84,23 +86,39 @@ class LattoLatto(gym.Env):
     def draw_line(self, pose_point, pose_ball_left, pose_ball_right):
         x = [pose_point[0], pose_ball_left[0]]
         y = [pose_point[1], pose_ball_left[1]]
-        plt.plot(x,y,color='black')
+        self.ax.plot(x, y, color='black')
         x = [pose_point[0], pose_ball_right[0]]
         y = [pose_point[1], pose_ball_right[1]]
-        plt.plot(x,y,color='black')
-        plt.scatter(pose_ball_left[0], pose_ball_left[1], color='blue', s=100)
-        plt.scatter(pose_ball_right[0], pose_ball_right[1], color='blue', s=100)
+        self.ax.plot(x, y, color='black')
+        self.ax.scatter(pose_ball_left[0], pose_ball_left[1], color='blue', s=100)
+        self.ax.scatter(pose_ball_right[0], pose_ball_right[1], color='blue', s=100)
         
     
     def render(self, mode='human'):
-        plt.axis('equal')
-        # plt.xlim([-self.length, self.length])
-        # plt.ylim([-5*self.length, 5*self.length])
+        if self.fig is None or self.ax is None or not plt.fignum_exists(self.fig.number):
+            plt.ion()
+            self.fig, self.ax = plt.subplots()
+            plt.show(block=False)
+
+        self.ax.clear()
+        self.ax.set_aspect('equal', adjustable='box')
+        self.ax.set_xlim([-1.5 * self.length, 1.5 * self.length])
+        self.ax.set_ylim([-self.z_threshold - 2 * self.length, self.z_threshold + 2 * self.length])
+        self.ax.set_title('Latto-Latto Animation')
+        self.ax.set_xlabel('x')
+        self.ax.set_ylabel('z')
+
         pose_point = [0, self.state[0]]
         pose_ball_left = [-self.length*math.sin(self.state[2]), self.state[0]-self.length*math.cos(self.state[2])]
         pose_ball_right = [self.length*math.sin(self.state[2]), self.state[0]-self.length*math.cos(self.state[2])]
         self.draw_line(pose_point, pose_ball_left, pose_ball_right)
-        plt.draw()
-        plt.pause(0.001)
-        plt.clf()
+        self.fig.canvas.draw_idle()
+        self.fig.canvas.flush_events()
+        plt.pause(0.02)
         print(f'State {self.state}, action: {self.act}, done: {self.cur_done}, reward: {self.cur_reward}')
+
+    def close(self):
+        if self.fig is not None:
+            plt.close(self.fig)
+            self.fig = None
+            self.ax = None

@@ -1,9 +1,13 @@
-%matplotlib
 import gym
 import math
 from latto_latto_model import LattoLatto
 from stable_baselines3 import PPO
 import matplotlib.pyplot as plt
+
+backend = plt.get_backend().lower()
+interactive_backend = backend not in {"agg", "pdf", "ps", "svg", "template"}
+if interactive_backend:
+    plt.ion()
 
 env = LattoLatto()
 observation = env.reset()
@@ -24,9 +28,13 @@ for i in range(0,100):
     if terminated:
         print('done')
         observation = env.reset()
-env.close()
 fig1, ax1 = plt.subplots()
 ax1.plot(time_array, action_array, '-r')
 ax1.set_xlabel("time")
 ax1.set_ylabel("acceleration")
+fig1.tight_layout()
 fig1.savefig('acceleration.png')
+if interactive_backend:
+    plt.ioff()
+    plt.show()
+env.close()
