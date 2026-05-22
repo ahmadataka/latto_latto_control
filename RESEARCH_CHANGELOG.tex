@@ -182,4 +182,101 @@ This improves the evaluation workflow by making drift, oscillation amplitude, an
 \paragraph{Research relevance.}
 This turns the reward-tuning question into a reproducible experiment and directly supports comparison of $z(t)$ and $\theta(t)$ across reward weights.
 
+\subsection*{Change 7: Collision Dynamics Updated from Ideal Reflection to Inelastic Impact}
+
+\paragraph{Motivation.}
+\begin{itemize}[leftmargin=1.5em]
+  \item The previous collision model used a perfect sign flip of angular velocity.
+  \item That assumption preserved too much energy at impact and made the hybrid dynamics less realistic.
+  \item For a stronger paper, the collision event should include explicit impact loss.
+\end{itemize}
+
+\paragraph{Previous collision reset.}
+\[
+\dot{\theta}^{+} = - \dot{\theta}^{-}
+\]
+
+\paragraph{Updated collision reset.}
+\[
+\dot{\theta}^{+} = - e \dot{\theta}^{-}
+\]
+
+where:
+\begin{itemize}[leftmargin=1.5em]
+  \item $\dot{\theta}^{-}$ is the angular velocity immediately before impact.
+  \item $\dot{\theta}^{+}$ is the angular velocity immediately after impact.
+  \item $e \in (0, 1]$ is the coefficient of restitution.
+\end{itemize}
+
+\paragraph{Current setting in code.}
+\[
+e = 0.9
+\]
+
+\paragraph{Impact energy loss proxy.}
+\[
+\Delta E_{\mathrm{impact}}
+=
+\frac{1}{2}\left((\dot{\theta}^{-})^{2} - (\dot{\theta}^{+})^{2}\right)
+\]
+
+\paragraph{Implementation notes.}
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{latto\_latto\_model.py} now accepts \texttt{collision\_restitution} as a constructor argument.
+  \item The environment now reports additional collision diagnostics through \texttt{info}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item \texttt{collision\_flag}
+    \item \texttt{pre\_collision\_theta\_dot}
+    \item \texttt{post\_collision\_theta\_dot}
+    \item \texttt{collision\_energy\_loss}
+  \end{itemize}
+\end{itemize}
+
+\paragraph{Research relevance.}
+This makes the environment a more meaningful hybrid impact-control benchmark. It also opens a stronger next experiment: compare controller robustness across different restitution values.
+
+\subsection*{Change 8: Alpha Sweep Repeated on the Inelastic-Collision Model}
+
+\paragraph{Motivation.}
+\begin{itemize}[leftmargin=1.5em]
+  \item After introducing inelastic impacts with restitution $e = 0.9$, the previous alpha-sweep results no longer reflected the current model.
+  \item The reward comparison needed to be repeated on the updated hybrid dynamics.
+\end{itemize}
+
+\paragraph{Change.}
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{alpha\_sweep\_experiment.py} was updated to run the sweep on the current model with:
+  \begin{itemize}[leftmargin=1.5em]
+    \item $e = 0.9$
+    \item $\alpha = 0.01$
+    \item $\alpha = 0.02$
+    \item $\alpha = 0.05$
+  \end{itemize}
+  \item Separate artifacts are now saved for the inelastic sweep:
+  \begin{itemize}[leftmargin=1.5em]
+    \item \texttt{ppo\_latto\_inelastic\_alpha\_0p010.zip}
+    \item \texttt{ppo\_latto\_inelastic\_alpha\_0p020.zip}
+    \item \texttt{ppo\_latto\_inelastic\_alpha\_0p050.zip}
+    \item \texttt{alpha\_sweep\_inelastic\_results.json}
+    \item \texttt{alpha\_pose\_inelastic\_comparison.png}
+  \end{itemize}
+\end{itemize}
+
+\paragraph{Observed outcome.}
+\begin{itemize}[leftmargin=1.5em]
+  \item $\alpha = 0.01$: \texttt{max |z| = 0.0250}, \texttt{mean |z| = 0.0092}, alternating collisions = \texttt{0}
+  \item $\alpha = 0.02$: \texttt{max |z| = 0.0409}, \texttt{mean |z| = 0.0256}, alternating collisions = \texttt{0}
+  \item $\alpha = 0.05$: \texttt{max |z| = 0.0313}, \texttt{mean |z| = 0.0121}, alternating collisions = \texttt{0}
+\end{itemize}
+
+\paragraph{Interpretation.}
+\begin{itemize}[leftmargin=1.5em]
+  \item $\alpha = 0.01$ remained the best of the three on vertical centering for this rollout.
+  \item All three policies still collapsed to non-bouncing behavior in deterministic evaluation.
+  \item The inelastic collision model made the task more realistic, but it did not by itself recover the desired alternating-impact rhythm under the current reward design.
+\end{itemize}
+
+\paragraph{Research relevance.}
+This is a useful negative result. It suggests that model fidelity alone is not enough; the reward or controller structure likely also needs to change to sustain rhythmic impacts under dissipative collisions.
+
 \end{document}

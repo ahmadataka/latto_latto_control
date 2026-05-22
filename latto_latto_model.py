@@ -5,7 +5,7 @@ import math
 import matplotlib.pyplot as plt
 
 class LattoLatto(gym.Env):
-    def __init__(self, z_position_penalty_weight=0.1):
+    def __init__(self, z_position_penalty_weight=0.1, collision_restitution=0.9):
         super(LattoLatto, self).__init__()
         self.MAX_EPISODE = 500
         self.z_threshold = self.z_dot_threshold = 1
@@ -26,6 +26,7 @@ class LattoLatto(gym.Env):
         self.friction = 0.5
         self.small_theta = 0.075
         self.z_position_penalty_weight = z_position_penalty_weight
+        self.collision_restitution = collision_restitution
         self.collision_now = 0
         self.collision_before = 0
         self.fig = None
@@ -35,8 +36,10 @@ class LattoLatto(gym.Env):
         action = np.float32(np.clip(action, -self.max_action, self.max_action))
         self.act = action
         collision_flag = 0
-        self.act = action
         z, z_dot, theta, theta_dot = self.state
+        pre_collision_theta_dot = theta_dot
+        post_collision_theta_dot = theta_dot
+        collision_energy_loss = 0.0
 
         theta_ddot = -(self.g+action[0])*math.sin(theta)/self.length - self.friction*theta_dot
         theta_dot = theta_dot + theta_ddot*self.delta_t
@@ -45,9 +48,12 @@ class LattoLatto(gym.Env):
         z = z + z_dot*self.delta_t
 
         if(theta<self.small_theta or theta>(math.pi-self.small_theta)):
-            theta_dot = theta_dot*(-1)
             collision_flag = 1
             self.collision_before = self.collision_now
+            pre_collision_theta_dot = theta_dot
+            theta_dot = -self.collision_restitution * theta_dot
+            post_collision_theta_dot = theta_dot
+            collision_energy_loss = 0.5 * (pre_collision_theta_dot ** 2 - post_collision_theta_dot ** 2)
             if(theta<self.small_theta):
                 theta = self.small_theta
                 self.collision_now = 0
@@ -77,9 +83,14 @@ class LattoLatto(gym.Env):
         self.cur_z_position_penalty = z_position_penalty
         self.cur_reward = reward
         self.cur_done = done
+        self.cur_collision_energy_loss = collision_energy_loss
         info = {
             "sparse_reward": sparse_reward,
             "z_position_penalty": z_position_penalty,
+            "collision_flag": collision_flag,
+            "pre_collision_theta_dot": pre_collision_theta_dot,
+            "post_collision_theta_dot": post_collision_theta_dot,
+            "collision_energy_loss": collision_energy_loss,
         }
         return np.array([self.state]), reward, done, info
 
@@ -122,13 +133,14 @@ class LattoLatto(gym.Env):
         plt.pause(0.02)
         print(
             "State {}, action: {}, done: {}, reward: {}, sparse_reward: {}, "
-            "z_position_penalty: {}".format(
+            "z_position_penalty: {}, collision_energy_loss: {}".format(
                 self.state,
                 self.act,
                 self.cur_done,
                 self.cur_reward,
                 self.cur_sparse_reward,
                 self.cur_z_position_penalty,
+                self.cur_collision_energy_loss,
             )
         )
 

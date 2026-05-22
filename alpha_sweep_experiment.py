@@ -13,9 +13,10 @@ from latto_latto_model import LattoLatto
 ALPHAS = [0.01, 0.02, 0.05]
 TOTAL_TIMESTEPS = 500000
 ROLLOUT_STEPS = 100
-MODEL_PREFIX = "ppo_latto_alpha"
-RESULTS_JSON = "alpha_sweep_results.json"
-POSE_PLOT = "alpha_pose_comparison.png"
+COLLISION_RESTITUTION = 0.9
+MODEL_PREFIX = "ppo_latto_inelastic_alpha"
+RESULTS_JSON = "alpha_sweep_inelastic_results.json"
+POSE_PLOT = "alpha_pose_inelastic_comparison.png"
 
 
 def alpha_tag(alpha):
@@ -27,7 +28,10 @@ def model_path(alpha):
 
 
 def train_model(alpha):
-    env = LattoLatto(z_position_penalty_weight=alpha)
+    env = LattoLatto(
+        z_position_penalty_weight=alpha,
+        collision_restitution=COLLISION_RESTITUTION,
+    )
     model = PPO("MlpPolicy", env, verbose=1)
     model.learn(total_timesteps=TOTAL_TIMESTEPS)
     model.save(model_path(alpha))
@@ -36,7 +40,10 @@ def train_model(alpha):
 
 
 def evaluate_model(alpha):
-    env = LattoLatto(z_position_penalty_weight=alpha)
+    env = LattoLatto(
+        z_position_penalty_weight=alpha,
+        collision_restitution=COLLISION_RESTITUTION,
+    )
     model = PPO.load(model_path(alpha), env=env)
     observation = env.reset()
 
@@ -63,6 +70,7 @@ def evaluate_model(alpha):
 
     return {
         "alpha": alpha,
+        "collision_restitution": COLLISION_RESTITUTION,
         "model_path": f"{model_path(alpha)}.zip",
         "time": time_array,
         "z": z_array,
@@ -80,6 +88,7 @@ def save_results(results):
         summary.append(
             {
                 "alpha": result["alpha"],
+                "collision_restitution": result["collision_restitution"],
                 "model_path": result["model_path"],
                 "reward_sum": result["reward_sum"],
                 "max_abs_z": result["max_abs_z"],
@@ -100,7 +109,10 @@ def plot_comparison(results):
         ax2.plot(result["time"], result["theta"], label=label)
 
     ax1.set_ylabel("pivot z")
-    ax1.set_title("Latto-Latto Pose Comparison Across Reward Weights")
+    ax1.set_title(
+        "Latto-Latto Pose Comparison Across Reward Weights "
+        f"(e={COLLISION_RESTITUTION})"
+    )
     ax1.legend()
     ax1.grid(True, alpha=0.3)
 

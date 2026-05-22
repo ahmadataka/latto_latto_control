@@ -134,3 +134,86 @@ Change:
 
 Research relevance:
 - This turns the reward-tuning question into a reproducible experiment and directly supports comparison of `z(t)` and `\theta(t)` across reward weights.
+
+### Change 7: Collision dynamics updated from ideal reflection to inelastic impact
+
+Motivation:
+- The previous collision model used a perfect sign flip of angular velocity.
+- That assumption preserved too much energy at impact and made the hybrid dynamics less realistic.
+- For a stronger paper, the collision event should include explicit impact loss.
+
+Previous collision reset:
+
+\[
+\dot{\theta}^{+} = - \dot{\theta}^{-}
+\]
+
+Updated collision reset:
+
+\[
+\dot{\theta}^{+} = - e \dot{\theta}^{-}
+\]
+
+where:
+- `\dot{\theta}^{-}` is the angular velocity immediately before impact
+- `\dot{\theta}^{+}` is the angular velocity immediately after impact
+- `e \in (0, 1]` is the coefficient of restitution
+
+Current setting in code:
+
+\[
+e = 0.9
+\]
+
+Impact energy loss proxy:
+
+\[
+\Delta E_{\mathrm{impact}}
+=
+\frac{1}{2}\left((\dot{\theta}^{-})^{2} - (\dot{\theta}^{+})^{2}\right)
+\]
+
+Implementation notes:
+- `latto_latto_model.py` now accepts `collision_restitution` as a constructor argument.
+- The environment now reports additional collision diagnostics through `info`:
+  - `collision_flag`
+  - `pre_collision_theta_dot`
+  - `post_collision_theta_dot`
+  - `collision_energy_loss`
+
+Research relevance:
+- This makes the environment a more meaningful hybrid impact-control benchmark.
+- It also opens a stronger next experiment: compare controller robustness across different restitution values.
+
+### Change 8: Alpha sweep repeated on the inelastic-collision model
+
+Motivation:
+- After introducing inelastic impacts with restitution `e = 0.9`, the previous alpha-sweep results no longer reflected the current model.
+- The reward comparison needed to be repeated on the updated hybrid dynamics.
+
+Change:
+- `alpha_sweep_experiment.py` was updated to run the sweep on the current model with:
+  - `e = 0.9`
+  - `\alpha = 0.01`
+  - `\alpha = 0.02`
+  - `\alpha = 0.05`
+- Separate artifacts are now saved for the inelastic sweep:
+  - `ppo_latto_inelastic_alpha_0p010.zip`
+  - `ppo_latto_inelastic_alpha_0p020.zip`
+  - `ppo_latto_inelastic_alpha_0p050.zip`
+  - `alpha_sweep_inelastic_results.json`
+  - `alpha_pose_inelastic_comparison.png`
+
+Observed outcome:
+- `\alpha = 0.01`: `max |z| = 0.0250`, `mean |z| = 0.0092`, alternating collisions = `0`
+- `\alpha = 0.02`: `max |z| = 0.0409`, `mean |z| = 0.0256`, alternating collisions = `0`
+- `\alpha = 0.05`: `max |z| = 0.0313`, `mean |z| = 0.0121`, alternating collisions = `0`
+
+Interpretation:
+- `\alpha = 0.01` remained the best of the three on vertical centering for this rollout.
+- All three policies still collapsed to non-bouncing behavior in deterministic evaluation.
+- The inelastic collision model made the task more realistic, but it did not by itself recover the desired alternating-impact rhythm under the current reward design.
+
+Research relevance:
+- This is a useful negative result.
+- It suggests that model fidelity alone is not enough; the reward or controller structure likely also needs to change to sustain rhythmic impacts under dissipative collisions.
