@@ -121,29 +121,33 @@ This section intentionally uses explicit filenames to avoid confusion.
 
 ### Baseline testing outputs
 
-- Action trace: `results/testing/testing_action_trace.png`
-- Pose trace: `results/testing/testing_pose_trace.png`
+- Generated action trace: `results/testing/testing_action_trace.png`
+- Generated pose trace: `results/testing/testing_pose_trace.png`
 
 ### Reward-weight comparison files
 
-- Ideal/inelastic alpha sweep comparison plot:
+- Generated ideal/inelastic alpha sweep comparison plot:
   `results/alpha_sweep_inelastic/alpha_pose_inelastic_comparison.png`
 - Ideal/inelastic alpha sweep summary:
   `results/alpha_sweep_inelastic/alpha_sweep_inelastic_results.json`
 
 ### Dead-zone tolerance comparison files
 
-- `z_tol` sweep comparison plot:
+- Generated `z_tol` sweep comparison plot:
   `results/ztol_sweep_inelastic/ztol_pose_inelastic_comparison.png`
 - `z_tol` sweep summary:
   `results/ztol_sweep_inelastic/ztol_sweep_inelastic_results.json`
 
 ### Collision reward weight comparison files
 
-- Collision reward sweep comparison plot:
+- Generated collision reward sweep comparison plot:
   `results/collision_reward_sweep_inelastic/collision_reward_pose_inelastic_comparison.png`
 - Collision reward sweep summary:
   `results/collision_reward_sweep_inelastic/collision_reward_sweep_inelastic_results.json`
+
+Note:
+- PNG plots are generated artifacts and are intentionally not kept in Git.
+- JSON summaries and trained checkpoints remain in the repository for experiment traceability.
 
 ## Trained Model Locations
 
