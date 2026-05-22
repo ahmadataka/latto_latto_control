@@ -1,0 +1,32 @@
+[
+  {
+    "alpha": 0.1,
+    "z_tol": 0.03,
+    "collision_restitution": 0.9,
+    "model_path": "ppo_latto_inelastic_ztol_0p030.zip",
+    "reward_sum": -5.757020415941838e-09,
+    "max_abs_z": 0.030170191079378128,
+    "mean_abs_z": 0.015955352718301584,
+    "alternating_collisions": 0
+  },
+  {
+    "alpha": 0.1,
+    "z_tol": 0.05,
+    "collision_restitution": 0.9,
+    "model_path": "ppo_latto_inelastic_ztol_0p050.zip",
+    "reward_sum": -0.013267920951065618,
+    "max_abs_z": 0.1025034487247467,
+    "mean_abs_z": 0.07725220120213634,
+    "alternating_collisions": 0
+  },
+  {
+    "alpha": 0.1,
+    "z_tol": 0.08,
+    "collision_restitution": 0.9,
+    "model_path": "ppo_latto_inelastic_ztol_0p080.zip",
+    "reward_sum": 0.0,
+    "max_abs_z": 0.046946387737989426,
+    "mean_abs_z": 0.01907499178807484,
+    "alternating_collisions": 0
+  }
+]
