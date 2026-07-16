@@ -1,0 +1,51 @@
+{
+  "run_group_name": "ppo_sparse_only_e_0p900_seed_multi_alpha_0p010_ztol_0p000_wc_1p000_beta_0p000",
+  "algorithm": "ppo",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "timesteps": 500000,
+  "reward_variant": "sparse_only",
+  "collision_restitution": 0.9,
+  "collision_reward_weight": 1.0,
+  "z_position_penalty_weight": 0.01,
+  "z_position_tolerance": 0.0,
+  "swing_growth_reward_weight": 0.0,
+  "summary": {
+    "num_runs": 3,
+    "reward_sum": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "alternating_collisions": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "longest_alternating_streak": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "total_collisions": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "time_to_first_alternating_collision": {
+      "mean": null,
+      "std": null
+    },
+    "mean_abs_z": {
+      "mean": 0.7078525252222607,
+      "std": 0.507114422960513
+    },
+    "max_abs_z": {
+      "mean": 2.027265946070353,
+      "std": 1.589943045165146
+    },
+    "mean_collision_energy_loss": {
+      "mean": 3.7239414056142173,
+      "std": 1.368847662624454
+    }
+  }
+}

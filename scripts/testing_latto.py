@@ -1,22 +1,24 @@
 from argparse import ArgumentParser
+import json
 from pathlib import Path
 import sys
 
 import matplotlib.pyplot as plt
-from stable_baselines3 import A2C, PPO, SAC
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT / "src"))
 
-from benchmark_utils import ensure_dir, evaluate_model, save_json
+from benchmark_utils import (
+    ensure_dir,
+    evaluate_controller,
+    save_json,
+)
 from latto_latto_model import LattoLatto
 
+from stable_baselines3 import A2C, PPO, SAC
 
-MODEL_MAP = {
-    "a2c": A2C,
-    "ppo": PPO,
-    "sac": SAC,
-}
+
+MODEL_MAP = {"a2c": A2C, "ppo": PPO, "sac": SAC}
 
 DEFAULT_MODEL_PATH = ROOT / "models" / "baselines" / "ppo_z_penalty_e_0p900_seed_0_alpha_0p100_ztol_0p000_wc_1p000_beta_0p000"
 DEFAULT_RESULTS_DIR = ROOT / "results" / "testing"
@@ -25,7 +27,7 @@ DEFAULT_RESULTS_DIR = ROOT / "results" / "testing"
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument("model_path", nargs="?", default=str(DEFAULT_MODEL_PATH))
-    parser.add_argument("--algorithm", default="ppo", choices=["ppo", "a2c", "sac"])
+    parser.add_argument("--controller", default="ppo", choices=["ppo", "a2c", "sac", "zero", "random", "sinusoidal"])
     parser.add_argument("--reward-variant", default="z_penalty", choices=["sparse_only", "z_penalty", "deadzone", "swing_growth"])
     parser.add_argument("--rollout-steps", type=int, default=100)
     parser.add_argument("--collision-restitution", type=float, default=0.9)
@@ -37,6 +39,36 @@ def parse_args():
     parser.add_argument("--output-prefix", default="testing")
     parser.add_argument("--render", action="store_true")
     return parser.parse_args()
+
+
+def load_controller(args, env):
+    if args.controller in MODEL_MAP:
+        return MODEL_MAP[args.controller].load(args.model_path, env=env)
+    metadata = Path(args.model_path)
+    if metadata.suffix != ".json":
+        metadata = Path(f"{args.model_path}.json")
+    payload = {}
+    if metadata.exists():
+        payload = json.loads(metadata.read_text())
+    if args.controller == "zero":
+        from benchmark_utils import ZeroController
+
+        return ZeroController(env=env, seed=payload.get("seed", 0))
+    if args.controller == "random":
+        from benchmark_utils import RandomController
+
+        return RandomController(env=env, seed=payload.get("seed", 0))
+    if args.controller == "sinusoidal":
+        from benchmark_utils import SinusoidalController
+
+        return SinusoidalController(
+            env=env,
+            seed=payload.get("seed", 0),
+            amplitude=payload.get("amplitude", 7.5),
+            frequency_hz=payload.get("frequency_hz", 1.2),
+            phase=payload.get("phase", 0.0),
+        )
+    raise ValueError(f"Unsupported controller: {args.controller}")
 
 
 def main():
@@ -52,10 +84,9 @@ def main():
         swing_growth_reward_weight=args.swing_growth_weight,
     )
 
-    model_class = MODEL_MAP[args.algorithm]
-    model = model_class.load(args.model_path, env=env)
-    evaluation = evaluate_model(
-        model=model,
+    controller = load_controller(args, env)
+    evaluation = evaluate_controller(
+        controller=controller,
         env=env,
         rollout_steps=args.rollout_steps,
         deterministic=True,
@@ -89,7 +120,7 @@ def main():
         metrics_path,
         {
             "model_path": args.model_path,
-            "algorithm": args.algorithm,
+            "controller": args.controller,
             "reward_variant": args.reward_variant,
             "collision_restitution": args.collision_restitution,
             "collision_reward_weight": args.collision_reward_weight,

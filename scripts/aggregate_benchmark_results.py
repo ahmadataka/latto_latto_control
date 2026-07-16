@@ -40,9 +40,10 @@ def main():
 
     grouped = {}
     for payload in payloads:
+        controller_name = payload.get("controller", payload.get("algorithm", "unknown"))
         key = "|".join(
             [
-                payload["algorithm"],
+                controller_name,
                 payload["reward_variant"],
                 f"e={payload['collision_restitution']}",
             ]

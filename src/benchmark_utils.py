@@ -1,4 +1,5 @@
 import json
+import math
 import random
 from pathlib import Path
 
@@ -6,10 +7,16 @@ import numpy as np
 from stable_baselines3 import A2C, PPO, SAC
 
 
-ALGORITHM_MAP = {
+RL_ALGORITHM_MAP = {
     "a2c": A2C,
     "ppo": PPO,
     "sac": SAC,
+}
+
+HEURISTIC_CONTROLLER_NAMES = {
+    "zero",
+    "random",
+    "sinusoidal",
 }
 
 
@@ -30,9 +37,9 @@ def format_float_tag(value, precision=3):
     return f"{value:.{precision}f}".replace(".", "p")
 
 
-def build_run_name(algorithm, reward_variant, restitution, seed, extras=None):
+def build_run_name(controller_name, reward_variant, restitution, seed, extras=None):
     parts = [
-        algorithm.lower(),
+        controller_name.lower(),
         reward_variant,
         f"e_{format_float_tag(restitution)}",
         f"seed_{seed}",
@@ -45,12 +52,102 @@ def build_run_name(algorithm, reward_variant, restitution, seed, extras=None):
     return "_".join(parts)
 
 
+def is_rl_algorithm(controller_name):
+    return controller_name.lower() in RL_ALGORITHM_MAP
+
+
+def is_heuristic_controller(controller_name):
+    return controller_name.lower() in HEURISTIC_CONTROLLER_NAMES
+
+
+class HeuristicController:
+    def __init__(self, env, seed=0):
+        self.env = env
+        self.seed = seed
+        self.rng = np.random.default_rng(seed)
+
+    def learn(self, total_timesteps):
+        return self
+
+    def save(self, path):
+        payload = {
+            "controller_type": self.__class__.__name__,
+            "seed": self.seed,
+        }
+        Path(f"{path}.json").write_text(json.dumps(payload, indent=2))
+
+
+class ZeroController(HeuristicController):
+    def predict(self, observation, deterministic=True):
+        return np.array([0.0], dtype=np.float32), None
+
+
+class RandomController(HeuristicController):
+    def predict(self, observation, deterministic=True):
+        action = self.rng.uniform(
+            low=-self.env.max_action,
+            high=self.env.max_action,
+        )
+        return np.array([action], dtype=np.float32), None
+
+
+class SinusoidalController(HeuristicController):
+    def __init__(self, env, seed=0, amplitude=7.5, frequency_hz=1.2, phase=0.0):
+        super().__init__(env=env, seed=seed)
+        self.amplitude = amplitude
+        self.frequency_hz = frequency_hz
+        self.phase = phase
+        self.step_index = 0
+
+    def predict(self, observation, deterministic=True):
+        time_now = self.step_index * self.env.delta_t
+        action = self.amplitude * math.sin(
+            2.0 * math.pi * self.frequency_hz * time_now + self.phase
+        )
+        self.step_index += 1
+        return np.array([action], dtype=np.float32), None
+
+    def save(self, path):
+        payload = {
+            "controller_type": self.__class__.__name__,
+            "seed": self.seed,
+            "amplitude": self.amplitude,
+            "frequency_hz": self.frequency_hz,
+            "phase": self.phase,
+        }
+        Path(f"{path}.json").write_text(json.dumps(payload, indent=2))
+
+
+def build_controller(controller_name, env, seed, verbose=1, controller_kwargs=None):
+    controller_kwargs = controller_kwargs or {}
+    name = controller_name.lower()
+    if name in RL_ALGORITHM_MAP:
+        model_class = RL_ALGORITHM_MAP[name]
+        return model_class("MlpPolicy", env, verbose=verbose, seed=seed)
+    if name == "zero":
+        return ZeroController(env=env, seed=seed)
+    if name == "random":
+        return RandomController(env=env, seed=seed)
+    if name == "sinusoidal":
+        return SinusoidalController(env=env, seed=seed, **controller_kwargs)
+    raise ValueError(f"Unsupported controller_name: {controller_name}")
+
+
 def build_model(algorithm, env, seed, verbose=1):
-    model_class = ALGORITHM_MAP[algorithm.lower()]
-    return model_class("MlpPolicy", env, verbose=verbose, seed=seed)
+    return build_controller(
+        controller_name=algorithm,
+        env=env,
+        seed=seed,
+        verbose=verbose,
+    )
 
 
-def evaluate_model(model, env, rollout_steps, deterministic=True, render=False):
+def train_controller(controller, total_timesteps):
+    controller.learn(total_timesteps=total_timesteps)
+    return controller
+
+
+def evaluate_controller(controller, env, rollout_steps, deterministic=True, render=False):
     observation = env.reset()
 
     time_trace = []
@@ -73,7 +170,7 @@ def evaluate_model(model, env, rollout_steps, deterministic=True, render=False):
     times = 0.0
 
     for _ in range(rollout_steps):
-        action, _state = model.predict(observation[0], deterministic=deterministic)
+        action, _state = controller.predict(observation[0], deterministic=deterministic)
         observation, reward, terminated, info = env.step(action)
 
         if render:
@@ -132,6 +229,16 @@ def evaluate_model(model, env, rollout_steps, deterministic=True, render=False):
         "collision_energy_loss": collision_energy_loss_trace,
         "collision_times": collision_time_trace,
     }
+
+
+def evaluate_model(model, env, rollout_steps, deterministic=True, render=False):
+    return evaluate_controller(
+        controller=model,
+        env=env,
+        rollout_steps=rollout_steps,
+        deterministic=deterministic,
+        render=render,
+    )
 
 
 def save_json(path, payload):

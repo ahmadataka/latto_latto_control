@@ -5,7 +5,14 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT / "src"))
 
-from benchmark_utils import build_model, build_run_name, ensure_dir, save_json, set_global_seed
+from benchmark_utils import (
+    build_controller,
+    build_run_name,
+    ensure_dir,
+    save_json,
+    set_global_seed,
+    train_controller,
+)
 from latto_latto_model import LattoLatto
 
 
@@ -45,7 +52,7 @@ def main():
     env.reset(seed=args.seed)
 
     run_name = build_run_name(
-        algorithm=args.algorithm,
+        controller_name=args.algorithm,
         reward_variant=args.reward_variant,
         restitution=args.collision_restitution,
         seed=args.seed,
@@ -60,11 +67,11 @@ def main():
     ensure_dir(args.model_dir)
     ensure_dir(args.results_dir)
 
-    model = build_model(args.algorithm, env, seed=args.seed, verbose=args.verbose)
-    model.learn(total_timesteps=args.timesteps)
+    controller = build_controller(args.algorithm, env, seed=args.seed, verbose=args.verbose)
+    train_controller(controller, total_timesteps=args.timesteps)
 
     model_path = args.model_dir / run_name
-    model.save(str(model_path))
+    controller.save(str(model_path))
 
     metadata_path = args.results_dir / f"{run_name}_train_metadata.json"
     save_json(

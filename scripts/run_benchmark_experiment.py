@@ -6,13 +6,15 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT / "src"))
 
 from benchmark_utils import (
-    build_model,
+    build_controller,
     build_run_name,
     ensure_dir,
-    evaluate_model,
+    evaluate_controller,
+    is_rl_algorithm,
     save_json,
     set_global_seed,
     summarize_runs,
+    train_controller,
 )
 from latto_latto_model import LattoLatto
 
@@ -23,7 +25,11 @@ DEFAULT_RESULTS_DIR = ROOT / "results" / "benchmark"
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument("--algorithm", default="ppo", choices=["ppo", "a2c", "sac"])
+    parser.add_argument(
+        "--controller",
+        default="ppo",
+        choices=["ppo", "a2c", "sac", "zero", "random", "sinusoidal"],
+    )
     parser.add_argument("--reward-variant", default="z_penalty", choices=["sparse_only", "z_penalty", "deadzone", "swing_growth"])
     parser.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
     parser.add_argument("--timesteps", type=int, default=500000)
@@ -36,6 +42,9 @@ def parse_args():
     parser.add_argument("--model-dir", type=Path, default=DEFAULT_MODEL_DIR)
     parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR)
     parser.add_argument("--verbose", type=int, default=0)
+    parser.add_argument("--sinusoidal-amplitude", type=float, default=7.5)
+    parser.add_argument("--sinusoidal-frequency-hz", type=float, default=1.2)
+    parser.add_argument("--sinusoidal-phase", type=float, default=0.0)
     return parser.parse_args()
 
 
@@ -57,7 +66,7 @@ def main():
 
     all_results = []
     run_group_name = build_run_name(
-        algorithm=args.algorithm,
+        controller_name=args.controller,
         reward_variant=args.reward_variant,
         restitution=args.collision_restitution,
         seed="multi",
@@ -73,11 +82,21 @@ def main():
         set_global_seed(seed)
         env = build_env(args)
         env.reset(seed=seed)
-        model = build_model(args.algorithm, env, seed=seed, verbose=args.verbose)
-        model.learn(total_timesteps=args.timesteps)
+        controller = build_controller(
+            controller_name=args.controller,
+            env=env,
+            seed=seed,
+            verbose=args.verbose,
+            controller_kwargs={
+                "amplitude": args.sinusoidal_amplitude,
+                "frequency_hz": args.sinusoidal_frequency_hz,
+                "phase": args.sinusoidal_phase,
+            },
+        )
+        train_controller(controller, total_timesteps=args.timesteps)
 
         run_name = build_run_name(
-            algorithm=args.algorithm,
+            controller_name=args.controller,
             reward_variant=args.reward_variant,
             restitution=args.collision_restitution,
             seed=seed,
@@ -89,10 +108,10 @@ def main():
             },
         )
         model_path = args.model_dir / run_name
-        model.save(str(model_path))
+        controller.save(str(model_path))
 
-        evaluation = evaluate_model(
-            model=model,
+        evaluation = evaluate_controller(
+            controller=controller,
             env=env,
             rollout_steps=args.rollout_steps,
             deterministic=True,
@@ -100,7 +119,8 @@ def main():
         )
         result_payload = {
             "run_name": run_name,
-            "algorithm": args.algorithm,
+            "controller": args.controller,
+            "controller_family": "rl" if is_rl_algorithm(args.controller) else "heuristic",
             "seed": seed,
             "timesteps": args.timesteps,
             "reward_variant": args.reward_variant,
@@ -128,7 +148,8 @@ def main():
     summary = summarize_runs(all_results)
     summary_payload = {
         "run_group_name": run_group_name,
-        "algorithm": args.algorithm,
+        "controller": args.controller,
+        "controller_family": "rl" if is_rl_algorithm(args.controller) else "heuristic",
         "seeds": args.seeds,
         "timesteps": args.timesteps,
         "reward_variant": args.reward_variant,

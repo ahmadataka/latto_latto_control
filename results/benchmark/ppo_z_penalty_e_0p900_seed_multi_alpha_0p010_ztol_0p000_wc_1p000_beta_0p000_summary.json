@@ -1,0 +1,51 @@
+{
+  "run_group_name": "ppo_z_penalty_e_0p900_seed_multi_alpha_0p010_ztol_0p000_wc_1p000_beta_0p000",
+  "algorithm": "ppo",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "timesteps": 500000,
+  "reward_variant": "z_penalty",
+  "collision_restitution": 0.9,
+  "collision_reward_weight": 1.0,
+  "z_position_penalty_weight": 0.01,
+  "z_position_tolerance": 0.0,
+  "swing_growth_reward_weight": 0.0,
+  "summary": {
+    "num_runs": 3,
+    "reward_sum": {
+      "mean": -0.0014001170890369913,
+      "std": 0.0007216805557935738
+    },
+    "alternating_collisions": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "longest_alternating_streak": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "total_collisions": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "time_to_first_alternating_collision": {
+      "mean": null,
+      "std": null
+    },
+    "mean_abs_z": {
+      "mean": 0.029501061462554688,
+      "std": 0.009848899447939537
+    },
+    "max_abs_z": {
+      "mean": 0.06474918375412624,
+      "std": 0.027100230353774526
+    },
+    "mean_collision_energy_loss": {
+      "mean": 2.263451433181763,
+      "std": 0.5264729930236716
+    }
+  }
+}
