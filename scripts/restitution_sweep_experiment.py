@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument(
         "--controller",
         default="ppo",
-        choices=["ppo", "a2c", "sac", "zero", "random", "sinusoidal", "pumping"],
+        choices=["ppo", "a2c", "sac", "zero", "random", "sinusoidal", "pumping", "phase_pumping"],
     )
     parser.add_argument(
         "--reward-variants",
@@ -53,6 +53,11 @@ def parse_args():
     parser.add_argument("--pumping-gain", type=float, default=6.0)
     parser.add_argument("--pumping-theta-deadband", type=float, default=0.08)
     parser.add_argument("--pumping-damping-gain", type=float, default=1.5)
+    parser.add_argument("--phase-pumping-gain", type=float, default=8.0)
+    parser.add_argument("--phase-pumping-phase-lead", type=float, default=0.6)
+    parser.add_argument("--phase-pumping-omega-scale", type=float, default=6.0)
+    parser.add_argument("--phase-pumping-z-feedback-gain", type=float, default=0.5)
+    parser.add_argument("--phase-pumping-z-dot-feedback-gain", type=float, default=0.15)
     return parser.parse_args()
 
 
@@ -79,6 +84,14 @@ def controller_kwargs_for(args):
             "gain": args.pumping_gain,
             "theta_deadband": args.pumping_theta_deadband,
             "damping_gain": args.pumping_damping_gain,
+        }
+    if args.controller == "phase_pumping":
+        return {
+            "gain": args.phase_pumping_gain,
+            "phase_lead": args.phase_pumping_phase_lead,
+            "omega_scale": args.phase_pumping_omega_scale,
+            "z_feedback_gain": args.phase_pumping_z_feedback_gain,
+            "z_dot_feedback_gain": args.phase_pumping_z_dot_feedback_gain,
         }
     return {}
 

@@ -18,6 +18,7 @@ HEURISTIC_CONTROLLER_NAMES = {
     "random",
     "sinusoidal",
     "pumping",
+    "phase_pumping",
 }
 
 
@@ -160,6 +161,52 @@ class PumpingController(HeuristicController):
         Path(f"{path}.json").write_text(json.dumps(payload, indent=2))
 
 
+class PhasePumpingController(HeuristicController):
+    def __init__(
+        self,
+        env,
+        seed=0,
+        gain=8.0,
+        phase_lead=0.6,
+        omega_scale=6.0,
+        z_feedback_gain=0.5,
+        z_dot_feedback_gain=0.15,
+    ):
+        super().__init__(env=env, seed=seed)
+        self.gain = gain
+        self.phase_lead = phase_lead
+        self.omega_scale = omega_scale
+        self.z_feedback_gain = z_feedback_gain
+        self.z_dot_feedback_gain = z_dot_feedback_gain
+        self.theta_center = math.pi / 2.0
+
+    def predict(self, observation, deterministic=True):
+        z, z_dot, theta, theta_dot = observation
+        centered_theta = theta - self.theta_center
+        phase = math.atan2(theta_dot / self.omega_scale, centered_theta)
+
+        # Use state-derived phase instead of elapsed time to inject energy
+        # in a cycle-aware way, while lightly regulating pivot drift.
+        command = self.gain * math.sin(phase + self.phase_lead)
+        command -= self.z_feedback_gain * z
+        command -= self.z_dot_feedback_gain * z_dot
+
+        action = float(np.clip(command, -self.env.max_action, self.env.max_action))
+        return np.array([action], dtype=np.float32), None
+
+    def save(self, path):
+        payload = {
+            "controller_type": self.__class__.__name__,
+            "seed": self.seed,
+            "gain": self.gain,
+            "phase_lead": self.phase_lead,
+            "omega_scale": self.omega_scale,
+            "z_feedback_gain": self.z_feedback_gain,
+            "z_dot_feedback_gain": self.z_dot_feedback_gain,
+        }
+        Path(f"{path}.json").write_text(json.dumps(payload, indent=2))
+
+
 def build_controller(controller_name, env, seed, verbose=1, controller_kwargs=None):
     controller_kwargs = controller_kwargs or {}
     name = controller_name.lower()
@@ -174,6 +221,8 @@ def build_controller(controller_name, env, seed, verbose=1, controller_kwargs=No
         return SinusoidalController(env=env, seed=seed, **controller_kwargs)
     if name == "pumping":
         return PumpingController(env=env, seed=seed, **controller_kwargs)
+    if name == "phase_pumping":
+        return PhasePumpingController(env=env, seed=seed, **controller_kwargs)
     raise ValueError(f"Unsupported controller_name: {controller_name}")
 
 
