@@ -44,8 +44,10 @@ latto_latto_control/
 ## Main Files
 
 - [src/latto_latto_model.py](/Users/ahmadataka/Documents/Bitbucket%20-%20Ataka/latto_latto_control/src/latto_latto_model.py:1): Gym environment, reward logic, and collision model.
+- [src/benchmark_utils.py](/Users/ahmadataka/Documents/Bitbucket%20-%20Ataka/latto_latto_control/src/benchmark_utils.py:1): shared training/evaluation helpers and benchmark metrics.
 - [scripts/training_latto_ppo.py](/Users/ahmadataka/Documents/Bitbucket%20-%20Ataka/latto_latto_control/scripts/training_latto_ppo.py:1): baseline PPO training entrypoint.
 - [scripts/testing_latto.py](/Users/ahmadataka/Documents/Bitbucket%20-%20Ataka/latto_latto_control/scripts/testing_latto.py:1): rollout animation and testing plots.
+- [scripts/run_benchmark_experiment.py](/Users/ahmadataka/Documents/Bitbucket%20-%20Ataka/latto_latto_control/scripts/run_benchmark_experiment.py:1): seed-aware benchmark runner with standardized JSON outputs.
 - [docs/RESEARCH_CHANGELOG.pdf](/Users/ahmadataka/Documents/Bitbucket%20-%20Ataka/latto_latto_control/docs/RESEARCH_CHANGELOG.pdf): rendered research log with equations.
 
 ## Setup
@@ -94,6 +96,27 @@ cd "/Users/ahmadataka/Documents/Bitbucket - Ataka/latto_latto_control"
 This generates:
 - `results/testing/testing_action_trace.png`
 - `results/testing/testing_pose_trace.png`
+- `results/testing/testing_metrics.json`
+
+### Run the benchmark runner
+
+This is the main paper-oriented experiment entrypoint. It trains one algorithm across one or more seeds and saves per-seed metrics plus a summary JSON.
+
+```bash
+cd "/Users/ahmadataka/Documents/Bitbucket - Ataka/latto_latto_control"
+MPLCONFIGDIR=/private/tmp .venv/bin/python scripts/run_benchmark_experiment.py \
+  --algorithm ppo \
+  --reward-variant z_penalty \
+  --seeds 0 1 2 \
+  --collision-restitution 0.9
+```
+
+### Aggregate benchmark results
+
+```bash
+cd "/Users/ahmadataka/Documents/Bitbucket - Ataka/latto_latto_control"
+.venv/bin/python scripts/aggregate_benchmark_results.py
+```
 
 ### Run experiment sweeps
 
@@ -118,6 +141,17 @@ MPLBACKEND=Agg MPLCONFIGDIR=/private/tmp .venv/bin/python scripts/collision_rewa
 ## Experiment Artifacts
 
 This section intentionally uses explicit filenames to avoid confusion.
+
+### Benchmark metrics now tracked
+
+- `alternating_collisions`
+- `longest_alternating_streak`
+- `total_collisions`
+- `time_to_first_alternating_collision`
+- `reward_sum`
+- `mean_abs_z`
+- `max_abs_z`
+- `mean_collision_energy_loss`
 
 ### Baseline testing outputs
 
@@ -192,3 +226,12 @@ Note:
 ## Current Research Note
 
 The repository now has clearer structure, but the control problem is still unresolved. The recent sweeps suggest that changing penalty weight, dead-zone width, and collision reward weight alone is not enough. The next likely direction is a reward term that encourages swing growth before alternating collisions appear.
+
+## Reward Variants
+
+The environment now supports explicit reward families through `reward_variant`:
+
+- `sparse_only`: reward only for alternating collisions.
+- `z_penalty`: alternating-collision reward minus pivot drift penalty.
+- `deadzone`: same penalty form, intended for use with nonzero `z_position_tolerance`.
+- `swing_growth`: `z_penalty` reward plus a positive bonus when swing amplitude grows toward the impact regime.

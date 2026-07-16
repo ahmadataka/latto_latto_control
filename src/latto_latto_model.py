@@ -1,5 +1,6 @@
 import gym
 from gym import spaces
+from gym.utils import seeding
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -11,6 +12,8 @@ class LattoLatto(gym.Env):
         z_position_tolerance=0.0,
         collision_reward_weight=1.0,
         collision_restitution=0.9,
+        reward_variant="z_penalty",
+        swing_growth_reward_weight=0.0,
     ):
         super(LattoLatto, self).__init__()
         self.MAX_EPISODE = 500
@@ -35,16 +38,41 @@ class LattoLatto(gym.Env):
         self.z_position_tolerance = z_position_tolerance
         self.collision_reward_weight = collision_reward_weight
         self.collision_restitution = collision_restitution
+        self.reward_variant = reward_variant
+        self.swing_growth_reward_weight = swing_growth_reward_weight
         self.collision_now = 0
         self.collision_before = 0
         self.fig = None
         self.ax = None
+        self.prev_swing_amplitude = self.compute_swing_amplitude(self.state[2])
+        self.np_random = None
+        self.seed()
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        self.action_space.seed(seed)
+        return [seed]
+
+    def compute_swing_amplitude(self, theta):
+        return abs(theta - (math.pi / 2.0))
+
+    def compute_reward(self, sparse_reward, z_position_penalty, swing_growth_reward):
+        if self.reward_variant == "sparse_only":
+            return sparse_reward
+        if self.reward_variant == "z_penalty":
+            return sparse_reward - z_position_penalty
+        if self.reward_variant == "deadzone":
+            return sparse_reward - z_position_penalty
+        if self.reward_variant == "swing_growth":
+            return sparse_reward - z_position_penalty + swing_growth_reward
+        raise ValueError(f"Unsupported reward_variant: {self.reward_variant}")
 
     def step(self, action):
         action = np.float32(np.clip(action, -self.max_action, self.max_action))
         self.act = action
         collision_flag = 0
         z, z_dot, theta, theta_dot = self.state
+        previous_theta = theta
         pre_collision_theta_dot = theta_dot
         post_collision_theta_dot = theta_dot
         collision_energy_loss = 0.0
@@ -83,7 +111,15 @@ class LattoLatto(gym.Env):
 
         z_position_excess = max(0.0, abs(z) - self.z_position_tolerance)
         z_position_penalty = self.z_position_penalty_weight * (z_position_excess ** 2)
-        reward = sparse_reward - z_position_penalty
+        previous_swing_amplitude = self.compute_swing_amplitude(previous_theta)
+        current_swing_amplitude = self.compute_swing_amplitude(theta)
+        swing_amplitude_delta = current_swing_amplitude - previous_swing_amplitude
+        swing_growth_reward = self.swing_growth_reward_weight * max(0.0, swing_amplitude_delta)
+        reward = self.compute_reward(
+            sparse_reward=sparse_reward,
+            z_position_penalty=z_position_penalty,
+            swing_growth_reward=swing_growth_reward,
+        )
 
         if not done:
             self.steps_left = self.steps_left-1
@@ -93,20 +129,33 @@ class LattoLatto(gym.Env):
         self.cur_reward = reward
         self.cur_done = done
         self.cur_collision_energy_loss = collision_energy_loss
+        self.cur_swing_growth_reward = swing_growth_reward
+        self.prev_swing_amplitude = current_swing_amplitude
         info = {
             "sparse_reward": sparse_reward,
             "z_position_penalty": z_position_penalty,
             "z_position_excess": z_position_excess,
+            "reward_variant": self.reward_variant,
+            "swing_amplitude": current_swing_amplitude,
+            "swing_amplitude_delta": swing_amplitude_delta,
+            "swing_growth_reward": swing_growth_reward,
             "collision_flag": collision_flag,
+            "collision_side": self.collision_now if collision_flag else None,
+            "alternating_collision": bool(collision_flag and self.collision_now != self.collision_before),
             "pre_collision_theta_dot": pre_collision_theta_dot,
             "post_collision_theta_dot": post_collision_theta_dot,
             "collision_energy_loss": collision_energy_loss,
         }
         return np.array([self.state]), reward, done, info
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
+        if seed is not None:
+            self.seed(seed)
         self.state = [0, 0, math.pi/3, 0]
         self.steps_left = self.MAX_EPISODE
+        self.collision_now = 0
+        self.collision_before = 0
+        self.prev_swing_amplitude = self.compute_swing_amplitude(self.state[2])
         return np.array([self.state])
 
     def draw_line(self, pose_point, pose_ball_left, pose_ball_right):
@@ -143,16 +192,18 @@ class LattoLatto(gym.Env):
         plt.pause(0.02)
         print(
             "State {}, action: {}, done: {}, reward: {}, sparse_reward: {}, "
-            "z_position_penalty: {}, collision_energy_loss: {}, "
-            "collision_reward_weight: {}".format(
+            "z_position_penalty: {}, swing_growth_reward: {}, "
+            "collision_energy_loss: {}, collision_reward_weight: {}, reward_variant: {}".format(
                 self.state,
                 self.act,
                 self.cur_done,
                 self.cur_reward,
                 self.cur_sparse_reward,
                 self.cur_z_position_penalty,
+                self.cur_swing_growth_reward,
                 self.cur_collision_energy_loss,
                 self.collision_reward_weight,
+                self.reward_variant,
             )
         )
 

@@ -1,158 +1,126 @@
-import json
+from argparse import ArgumentParser
 from pathlib import Path
 import sys
-
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-from stable_baselines3 import PPO
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT / "src"))
 
+from benchmark_utils import (
+    build_model,
+    ensure_dir,
+    evaluate_model,
+    format_float_tag,
+    save_json,
+    set_global_seed,
+    summarize_runs,
+)
 from latto_latto_model import LattoLatto
 
 
 ALPHAS = [0.01, 0.02, 0.05]
-TOTAL_TIMESTEPS = 500000
-ROLLOUT_STEPS = 100
-COLLISION_RESTITUTION = 0.9
-MODEL_DIR = ROOT / "models" / "alpha_sweep_inelastic"
-RESULTS_PATH = ROOT / "results" / "alpha_sweep_inelastic" / "alpha_sweep_inelastic_results.json"
-POSE_PLOT_PATH = ROOT / "results" / "alpha_sweep_inelastic" / "alpha_pose_inelastic_comparison.png"
+DEFAULT_MODEL_DIR = ROOT / "models" / "alpha_sweep_inelastic"
+DEFAULT_RESULTS_DIR = ROOT / "results" / "alpha_sweep_inelastic"
 
 
-def alpha_tag(alpha):
-    return f"{alpha:.3f}".replace(".", "p")
-
-
-def model_path(alpha):
-    return MODEL_DIR / f"ppo_latto_inelastic_alpha_{alpha_tag(alpha)}"
-
-
-def train_model(alpha):
-    env = LattoLatto(
-        z_position_penalty_weight=alpha,
-        collision_restitution=COLLISION_RESTITUTION,
-    )
-    model = PPO("MlpPolicy", env, verbose=1)
-    model.learn(total_timesteps=TOTAL_TIMESTEPS)
-    model.save(model_path(alpha))
-    env.close()
-    return model
-
-
-def evaluate_model(alpha):
-    env = LattoLatto(
-        z_position_penalty_weight=alpha,
-        collision_restitution=COLLISION_RESTITUTION,
-    )
-    model = PPO.load(model_path(alpha), env=env)
-    observation = env.reset()
-
-    time_array = []
-    z_array = []
-    theta_array = []
-    reward_array = []
-    sparse_reward_hits = 0
-    times = 0.0
-
-    for _ in range(ROLLOUT_STEPS):
-        action, _state = model.predict(observation[0], deterministic=True)
-        observation, reward, terminated, info = env.step(action)
-        time_array.append(times)
-        z_array.append(float(env.state[0]))
-        theta_array.append(float(env.state[2]))
-        reward_array.append(float(reward))
-        sparse_reward_hits += int(info["sparse_reward"] > 0)
-        times += env.delta_t
-        if terminated:
-            break
-
-    env.close()
-
-    return {
-        "alpha": alpha,
-        "collision_restitution": COLLISION_RESTITUTION,
-        "model_path": f"{model_path(alpha)}.zip",
-        "time": time_array,
-        "z": z_array,
-        "theta": theta_array,
-        "reward_sum": float(np.sum(reward_array)),
-        "max_abs_z": float(np.max(np.abs(z_array))),
-        "mean_abs_z": float(np.mean(np.abs(z_array))),
-        "alternating_collisions": sparse_reward_hits,
-    }
-
-
-def save_results(results):
-    summary = []
-    for result in results:
-        summary.append(
-            {
-                "alpha": result["alpha"],
-                "collision_restitution": result["collision_restitution"],
-                "model_path": result["model_path"],
-                "reward_sum": result["reward_sum"],
-                "max_abs_z": result["max_abs_z"],
-                "mean_abs_z": result["mean_abs_z"],
-                "alternating_collisions": result["alternating_collisions"],
-            }
-        )
-
-    RESULTS_PATH.write_text(json.dumps(summary, indent=2))
-
-
-def plot_comparison(results):
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(10, 8))
-
-    for result in results:
-        label = f"alpha={result['alpha']:.2f}"
-        ax1.plot(result["time"], result["z"], label=label)
-        ax2.plot(result["time"], result["theta"], label=label)
-
-    ax1.set_ylabel("pivot z")
-    ax1.set_title(
-        "Latto-Latto Pose Comparison Across Reward Weights "
-        f"(e={COLLISION_RESTITUTION})"
-    )
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
-
-    ax2.set_xlabel("time")
-    ax2.set_ylabel("theta")
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
-
-    fig.tight_layout()
-    fig.savefig(POSE_PLOT_PATH)
-    plt.close(fig)
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("--algorithm", default="ppo", choices=["ppo", "a2c", "sac"])
+    parser.add_argument("--reward-variant", default="z_penalty", choices=["sparse_only", "z_penalty", "deadzone", "swing_growth"])
+    parser.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
+    parser.add_argument("--timesteps", type=int, default=500000)
+    parser.add_argument("--rollout-steps", type=int, default=100)
+    parser.add_argument("--collision-restitution", type=float, default=0.9)
+    parser.add_argument("--collision-reward-weight", type=float, default=1.0)
+    parser.add_argument("--z-tolerance", type=float, default=0.0)
+    parser.add_argument("--swing-growth-weight", type=float, default=0.0)
+    parser.add_argument("--model-dir", type=Path, default=DEFAULT_MODEL_DIR)
+    parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR)
+    parser.add_argument("--verbose", type=int, default=0)
+    return parser.parse_args()
 
 
 def main():
-    results = []
+    args = parse_args()
+    ensure_dir(args.model_dir)
+    ensure_dir(args.results_dir)
 
+    experiment_summary = []
     for alpha in ALPHAS:
-        print(f"=== Training alpha={alpha:.2f} ===")
-        train_model(alpha)
-        print(f"=== Evaluating alpha={alpha:.2f} ===")
-        result = evaluate_model(alpha)
-        results.append(result)
-        print(
+        alpha_results = []
+        for seed in args.seeds:
+            set_global_seed(seed)
+            env = LattoLatto(
+                z_position_penalty_weight=alpha,
+                z_position_tolerance=args.z_tolerance,
+                collision_reward_weight=args.collision_reward_weight,
+                collision_restitution=args.collision_restitution,
+                reward_variant=args.reward_variant,
+                swing_growth_reward_weight=args.swing_growth_weight,
+            )
+            env.reset(seed=seed)
+
+            model = build_model(args.algorithm, env, seed=seed, verbose=args.verbose)
+            model.learn(total_timesteps=args.timesteps)
+
+            run_name = (
+                f"{args.algorithm}_{args.reward_variant}_alpha_{format_float_tag(alpha)}"
+                f"_e_{format_float_tag(args.collision_restitution)}_seed_{seed}"
+            )
+            model_path = args.model_dir / run_name
+            model.save(str(model_path))
+
+            evaluation = evaluate_model(model, env, rollout_steps=args.rollout_steps)
+            payload = {
+                "run_name": run_name,
+                "algorithm": args.algorithm,
+                "seed": seed,
+                "alpha": alpha,
+                "reward_variant": args.reward_variant,
+                "collision_restitution": args.collision_restitution,
+                "collision_reward_weight": args.collision_reward_weight,
+                "z_position_tolerance": args.z_tolerance,
+                "swing_growth_reward_weight": args.swing_growth_weight,
+                "model_path": f"{model_path}.zip",
+                "evaluation": evaluation,
+            }
+            save_json(args.results_dir / f"{run_name}.json", payload)
+            alpha_results.append(evaluation)
+            env.close()
+            print(
+                {
+                    "alpha": alpha,
+                    "seed": seed,
+                    "reward_sum": round(evaluation["reward_sum"], 6),
+                    "alternating_collisions": evaluation["alternating_collisions"],
+                    "longest_alternating_streak": evaluation["longest_alternating_streak"],
+                }
+            )
+
+        experiment_summary.append(
             {
-                "alpha": result["alpha"],
-                "reward_sum": round(result["reward_sum"], 6),
-                "max_abs_z": round(result["max_abs_z"], 6),
-                "mean_abs_z": round(result["mean_abs_z"], 6),
-                "alternating_collisions": result["alternating_collisions"],
+                "alpha": alpha,
+                "summary": summarize_runs(alpha_results),
             }
         )
 
-    save_results(results)
-    plot_comparison(results)
-    print(f"Saved summary to {RESULTS_PATH}")
-    print(f"Saved pose comparison plot to {POSE_PLOT_PATH}")
+    summary_path = args.results_dir / "alpha_sweep_inelastic_results.json"
+    save_json(
+        summary_path,
+        {
+            "date": "2026-07-16",
+            "algorithm": args.algorithm,
+            "reward_variant": args.reward_variant,
+            "seeds": args.seeds,
+            "timesteps": args.timesteps,
+            "rollout_steps": args.rollout_steps,
+            "collision_restitution": args.collision_restitution,
+            "collision_reward_weight": args.collision_reward_weight,
+            "z_position_tolerance": args.z_tolerance,
+            "swing_growth_reward_weight": args.swing_growth_weight,
+            "results": experiment_summary,
+        },
+    )
+    print(f"Saved summary to {summary_path}")
 
 
 if __name__ == "__main__":
