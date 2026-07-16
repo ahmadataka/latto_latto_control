@@ -126,16 +126,16 @@ Interpretation:
 
 | Controller | e=1.0 | e=0.95 | e=0.9 | e=0.8 |
 | --- | --- | --- | --- | --- |
-| PPO | Alt. `0.00`, Streak `0.00`, Max \|z\| `0.048` | Alt. `0.00`, Streak `0.00`, Max \|z\| `0.044` | Alt. `0.00`, Streak `0.00`, Max \|z\| `0.065` | Alt. `0.00`, Streak `0.00`, Max \|z\| `0.131` |
-| A2C | Alt. `8.67`, Streak `8.67`, Max \|z\| `6.492` | Alt. `5.00`, Streak `5.00`, Max \|z\| `7.604` | Alt. `5.67`, Streak `5.67`, Max \|z\| `7.338` | Alt. `6.00`, Streak `6.00`, Max \|z\| `1.405` |
+| PPO | Alt. `1.20`, Streak `1.20`, Max \|z\| `0.143` | Alt. `0.00`, Streak `0.00`, Max \|z\| `0.035` | Alt. `0.00`, Streak `0.00`, Max \|z\| `0.071` | Alt. `0.00`, Streak `0.00`, Max \|z\| `0.086` |
+| A2C | Alt. `10.40`, Streak `10.40`, Max \|z\| `4.161` | Alt. `6.80`, Streak `6.80`, Max \|z\| `4.767` | Alt. `3.40`, Streak `3.40`, Max \|z\| `4.580` | Alt. `4.80`, Streak `4.80`, Max \|z\| `5.025` |
 | Sinusoidal | Alt. `0.00`, Streak `0.00`, Max \|z\| `1.908` | Alt. `0.00`, Streak `0.00`, Max \|z\| `1.908` | Alt. `0.00`, Streak `0.00`, Max \|z\| `1.908` | Alt. `0.00`, Streak `0.00`, Max \|z\| `1.908` |
 
 ## swing_growth
 
 | Controller | e=1.0 | e=0.95 | e=0.9 | e=0.8 |
 | --- | --- | --- | --- | --- |
-| PPO | Alt. `1.67`, Streak `1.67`, Max \|z\| `0.186` | Alt. `2.00`, Streak `2.00`, Max \|z\| `0.095` | Alt. `0.00`, Streak `0.00`, Max \|z\| `0.064` | Alt. `0.00`, Streak `0.00`, Max \|z\| `0.083` |
-| A2C | Alt. `4.33`, Streak `4.33`, Max \|z\| `9.870` | Alt. `10.67`, Streak `10.67`, Max \|z\| `1.065` | Alt. `5.67`, Streak `5.67`, Max \|z\| `2.836` | Alt. `3.67`, Streak `3.67`, Max \|z\| `9.318` |
+| PPO | Alt. `2.20`, Streak `2.20`, Max \|z\| `0.192` | Alt. `3.60`, Streak `3.60`, Max \|z\| `0.327` | Alt. `2.60`, Streak `2.60`, Max \|z\| `0.787` | Alt. `0.00`, Streak `0.00`, Max \|z\| `0.086` |
+| A2C | Alt. `4.40`, Streak `4.40`, Max \|z\| `8.599` | Alt. `6.40`, Streak `6.40`, Max \|z\| `5.284` | Alt. `5.40`, Streak `5.40`, Max \|z\| `6.022` | Alt. `5.00`, Streak `5.00`, Max \|z\| `6.365` |
 | Sinusoidal | Alt. `0.00`, Streak `0.00`, Max \|z\| `1.908` | Alt. `0.00`, Streak `0.00`, Max \|z\| `1.908` | Alt. `0.00`, Streak `0.00`, Max \|z\| `1.908` | Alt. `0.00`, Streak `0.00`, Max \|z\| `1.908` |
 
 ## Quick Read
@@ -143,8 +143,8 @@ Interpretation:
 - `PPO` is drift-stable but usually fails to generate sustained alternating impacts.
 - `A2C` is much more capable of producing alternating impacts, but it is far more volatile and often allows large `z` drift.
 - The default `sinusoidal` controller fails across all tested restitutions and reward variants.
-- `A2C + swing_growth` is strongest at `e = 0.95`.
-- `A2C + z_penalty` is the most persistent performer across the full restitution sweep.
+- With `5` seeds, `A2C + z_penalty` becomes the clearest overall rhythmic performer, especially at `e = 1.0`.
+- `PPO + swing_growth` improves relative to the earlier `3`-seed picture, but it still remains far below `A2C` in sustained rhythm quality.
 
 ## Paper-Ready Threshold Tables
 
@@ -154,10 +154,10 @@ These tables are useful as secondary summaries, but the main benchmark interpret
 
 | Controller | Reward | e=1.0 | e=0.95 | e=0.9 | e=0.8 |
 | --- | --- | --- | --- | --- | --- |
-| PPO | `z_penalty` | `0.00` | `0.00` | `0.00` | `0.00` |
-| PPO | `swing_growth` | `0.33` | `0.33` | `0.00` | `0.00` |
-| A2C | `z_penalty` | `0.67` | `0.33` | `0.67` | `1.00` |
-| A2C | `swing_growth` | `0.33` | `1.00` | `0.67` | `0.33` |
+| PPO | `z_penalty` | `0.20` | `0.00` | `0.00` | `0.00` |
+| PPO | `swing_growth` | `0.40` | `0.60` | `0.40` | `0.00` |
+| A2C | `z_penalty` | `0.80` | `0.60` | `0.40` | `0.80` |
+| A2C | `swing_growth` | `0.40` | `0.60` | `0.60` | `0.60` |
 | Sinusoidal | `z_penalty` | `0.00` | `0.00` | `0.00` | `0.00` |
 | Sinusoidal | `swing_growth` | `0.00` | `0.00` | `0.00` | `0.00` |
 | Random | `z_penalty` | `0.00` | `0.00` | `0.00` | `0.00` |
@@ -171,8 +171,8 @@ These tables are useful as secondary summaries, but the main benchmark interpret
 | --- | --- | --- | --- | --- | --- |
 | PPO | `z_penalty` | `0.00` | `0.00` | `0.00` | `0.00` |
 | PPO | `swing_growth` | `0.00` | `0.00` | `0.00` | `0.00` |
-| A2C | `z_penalty` | `0.67` | `0.33` | `0.33` | `0.00` |
-| A2C | `swing_growth` | `0.33` | `1.00` | `0.00` | `0.00` |
+| A2C | `z_penalty` | `0.80` | `0.40` | `0.20` | `0.00` |
+| A2C | `swing_growth` | `0.20` | `0.60` | `0.20` | `0.00` |
 | Sinusoidal | `z_penalty` | `0.00` | `0.00` | `0.00` | `0.00` |
 | Sinusoidal | `swing_growth` | `0.00` | `0.00` | `0.00` | `0.00` |
 | Random | `z_penalty` | `0.00` | `0.00` | `0.00` | `0.00` |
@@ -184,8 +184,9 @@ These tables are useful as secondary summaries, but the main benchmark interpret
 
 - `PPO` rarely reaches even `Success@5`.
 - `A2C` is the only controller family that repeatedly crosses the benchmark success threshold.
-- `A2C + swing_growth` is strongest under `e = 0.95` by the strict `Success@10` metric.
-- `A2C + z_penalty` is the most persistent controller-reward pair across the full restitution sweep.
+- `A2C + z_penalty` is strongest at `e = 1.0` by the strict `Success@10` metric.
+- `A2C + swing_growth` remains strongest at `e = 0.95` among the swing-growth settings.
+- `PPO + swing_growth` shows partial rhythmic competence under `e = 1.0`, `0.95`, and `0.9`, but it does not sustain long enough to reach `Success@10`.
 - All non-learning baselines currently fail under both success thresholds.
 
 ## Additional Baseline Notes

@@ -66,12 +66,12 @@ Reason:
 `A2C` is the strongest controller family currently tested.
 
 In particular:
-- `A2C + z_penalty` is the most persistent performer across restitution levels.
-- `A2C + swing_growth` is strongest at restitution `e = 0.95`.
+- with `5` seeds, `A2C + z_penalty` is the clearest overall performer across the restitution sweep,
+- while `A2C + swing_growth` remains strongest at restitution `e = 0.95` within the swing-growth setting.
 
 ### Most stable but weak performer
 
-`PPO` is comparatively stable in `z`, but it rarely produces sustained rhythmic success.
+`PPO` is comparatively stable in `z`, and with `5` seeds it shows more partial rhythmic bursts under `swing_growth`, but it still rarely produces sustained rhythmic success.
 
 ### Non-learning baselines
 
