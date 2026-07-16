@@ -1,0 +1,7 @@
+{
+  "controller_type": "SinusoidalController",
+  "seed": 0,
+  "amplitude": 7.5,
+  "frequency_hz": 1.2,
+  "phase": 0.0
+}

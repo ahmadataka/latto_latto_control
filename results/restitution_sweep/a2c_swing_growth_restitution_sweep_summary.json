@@ -1,0 +1,171 @@
+{
+  "date": "2026-07-16",
+  "controller": "a2c",
+  "controller_family": "rl",
+  "reward_variant": "swing_growth",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "timesteps": 500000,
+  "rollout_steps": 100,
+  "collision_reward_weight": 1.0,
+  "z_position_penalty_weight": 0.01,
+  "z_position_tolerance": 0.0,
+  "swing_growth_reward_weight": 0.05,
+  "results": [
+    {
+      "collision_restitution": 1.0,
+      "summary": {
+        "num_runs": 3,
+        "reward_sum": {
+          "mean": -28.391089671837307,
+          "std": 41.043340055647164
+        },
+        "alternating_collisions": {
+          "mean": 4.333333333333333,
+          "std": 6.128258770283412
+        },
+        "longest_alternating_streak": {
+          "mean": 4.333333333333333,
+          "std": 6.128258770283412
+        },
+        "total_collisions": {
+          "mean": 6.333333333333333,
+          "std": 5.792715732327589
+        },
+        "time_to_first_alternating_collision": {
+          "mean": 0.5000000000000001,
+          "std": 0.0
+        },
+        "mean_abs_z": {
+          "mean": 3.3763329064620966,
+          "std": 2.682011153742164
+        },
+        "max_abs_z": {
+          "mean": 9.869811614354452,
+          "std": 7.95456506741001
+        },
+        "mean_collision_energy_loss": {
+          "mean": 0.0,
+          "std": 0.0
+        }
+      }
+    },
+    {
+      "collision_restitution": 0.95,
+      "summary": {
+        "num_runs": 3,
+        "reward_sum": {
+          "mean": 11.030173950026303,
+          "std": 0.9351065672866627
+        },
+        "alternating_collisions": {
+          "mean": 10.666666666666666,
+          "std": 0.4714045207910317
+        },
+        "longest_alternating_streak": {
+          "mean": 10.666666666666666,
+          "std": 0.4714045207910317
+        },
+        "total_collisions": {
+          "mean": 11.666666666666666,
+          "std": 0.4714045207910317
+        },
+        "time_to_first_alternating_collision": {
+          "mean": 0.5266666666666668,
+          "std": 0.024944382578492966
+        },
+        "mean_abs_z": {
+          "mean": 0.4808477813226637,
+          "std": 0.2505984466585799
+        },
+        "max_abs_z": {
+          "mean": 1.0647347172101338,
+          "std": 0.5681777155918077
+        },
+        "mean_collision_energy_loss": {
+          "mean": 26.40441643108021,
+          "std": 0.43477361572176565
+        }
+      }
+    },
+    {
+      "collision_restitution": 0.9,
+      "summary": {
+        "num_runs": 3,
+        "reward_sum": {
+          "mean": 3.407162670751044,
+          "std": 2.899048187329784
+        },
+        "alternating_collisions": {
+          "mean": 5.666666666666667,
+          "std": 4.0276819911981905
+        },
+        "longest_alternating_streak": {
+          "mean": 5.666666666666667,
+          "std": 4.0276819911981905
+        },
+        "total_collisions": {
+          "mean": 7.666666666666667,
+          "std": 2.6246692913372702
+        },
+        "time_to_first_alternating_collision": {
+          "mean": 0.6600000000000003,
+          "std": 0.020000000000000018
+        },
+        "mean_abs_z": {
+          "mean": 1.236408728522947,
+          "std": 0.5388649433843206
+        },
+        "max_abs_z": {
+          "mean": 2.835975686709086,
+          "std": 1.086272349627997
+        },
+        "mean_collision_energy_loss": {
+          "mean": 26.906561883290607,
+          "std": 12.96917101007933
+        }
+      }
+    },
+    {
+      "collision_restitution": 0.8,
+      "summary": {
+        "num_runs": 3,
+        "reward_sum": {
+          "mean": -26.844588840492587,
+          "std": 36.29041368184003
+        },
+        "alternating_collisions": {
+          "mean": 3.6666666666666665,
+          "std": 2.8674417556808756
+        },
+        "longest_alternating_streak": {
+          "mean": 3.6666666666666665,
+          "std": 2.8674417556808756
+        },
+        "total_collisions": {
+          "mean": 4.333333333333333,
+          "std": 3.2998316455372216
+        },
+        "time_to_first_alternating_collision": {
+          "mean": 0.7600000000000003,
+          "std": 0.16000000000000014
+        },
+        "mean_abs_z": {
+          "mean": 3.5149825003448254,
+          "std": 2.320457218269753
+        },
+        "max_abs_z": {
+          "mean": 9.318297465642294,
+          "std": 7.366438433052272
+        },
+        "mean_collision_energy_loss": {
+          "mean": 30.132893427213034,
+          "std": 21.631116864165016
+        }
+      }
+    }
+  ]
+}

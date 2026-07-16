@@ -1,0 +1,171 @@
+{
+  "date": "2026-07-16",
+  "controller": "sinusoidal",
+  "controller_family": "heuristic",
+  "reward_variant": "z_penalty",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "timesteps": 1,
+  "rollout_steps": 100,
+  "collision_reward_weight": 1.0,
+  "z_position_penalty_weight": 0.01,
+  "z_position_tolerance": 0.0,
+  "swing_growth_reward_weight": 0.05,
+  "results": [
+    {
+      "collision_restitution": 1.0,
+      "summary": {
+        "num_runs": 3,
+        "reward_sum": {
+          "mean": -1.3120974908271934,
+          "std": 0.0
+        },
+        "alternating_collisions": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "longest_alternating_streak": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "total_collisions": {
+          "mean": 5.0,
+          "std": 0.0
+        },
+        "time_to_first_alternating_collision": {
+          "mean": null,
+          "std": null
+        },
+        "mean_abs_z": {
+          "mean": 0.9865459140829625,
+          "std": 0.0
+        },
+        "max_abs_z": {
+          "mean": 1.907972812652588,
+          "std": 0.0
+        },
+        "mean_collision_energy_loss": {
+          "mean": 0.0,
+          "std": 0.0
+        }
+      }
+    },
+    {
+      "collision_restitution": 0.95,
+      "summary": {
+        "num_runs": 3,
+        "reward_sum": {
+          "mean": -1.3120974908271934,
+          "std": 0.0
+        },
+        "alternating_collisions": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "longest_alternating_streak": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "total_collisions": {
+          "mean": 5.0,
+          "std": 0.0
+        },
+        "time_to_first_alternating_collision": {
+          "mean": null,
+          "std": null
+        },
+        "mean_abs_z": {
+          "mean": 0.9865459140829625,
+          "std": 0.0
+        },
+        "max_abs_z": {
+          "mean": 1.907972812652588,
+          "std": 0.0
+        },
+        "mean_collision_energy_loss": {
+          "mean": 1.331130599975586,
+          "std": 0.0
+        }
+      }
+    },
+    {
+      "collision_restitution": 0.9,
+      "summary": {
+        "num_runs": 3,
+        "reward_sum": {
+          "mean": -1.3120974908271934,
+          "std": 0.0
+        },
+        "alternating_collisions": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "longest_alternating_streak": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "total_collisions": {
+          "mean": 5.0,
+          "std": 0.0
+        },
+        "time_to_first_alternating_collision": {
+          "mean": null,
+          "std": null
+        },
+        "mean_abs_z": {
+          "mean": 0.9865459140829625,
+          "std": 0.0
+        },
+        "max_abs_z": {
+          "mean": 1.907972812652588,
+          "std": 0.0
+        },
+        "mean_collision_energy_loss": {
+          "mean": 2.3867695331573486,
+          "std": 0.0
+        }
+      }
+    },
+    {
+      "collision_restitution": 0.8,
+      "summary": {
+        "num_runs": 3,
+        "reward_sum": {
+          "mean": -1.3120974908271934,
+          "std": 0.0
+        },
+        "alternating_collisions": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "longest_alternating_streak": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "total_collisions": {
+          "mean": 5.0,
+          "std": 0.0
+        },
+        "time_to_first_alternating_collision": {
+          "mean": null,
+          "std": null
+        },
+        "mean_abs_z": {
+          "mean": 0.9865459140829625,
+          "std": 0.0
+        },
+        "max_abs_z": {
+          "mean": 1.907972812652588,
+          "std": 0.0
+        },
+        "mean_collision_energy_loss": {
+          "mean": 4.051298260688782,
+          "std": 0.0
+        }
+      }
+    }
+  ]
+}
