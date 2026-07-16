@@ -1,0 +1,8 @@
+{
+  "controller_type": "PumpingController",
+  "seed": 0,
+  "gain": 6.0,
+  "theta_center": 1.5707963267948966,
+  "theta_deadband": 0.08,
+  "damping_gain": 1.5
+}

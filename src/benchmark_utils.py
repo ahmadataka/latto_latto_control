@@ -17,6 +17,7 @@ HEURISTIC_CONTROLLER_NAMES = {
     "zero",
     "random",
     "sinusoidal",
+    "pumping",
 }
 
 
@@ -118,6 +119,47 @@ class SinusoidalController(HeuristicController):
         Path(f"{path}.json").write_text(json.dumps(payload, indent=2))
 
 
+class PumpingController(HeuristicController):
+    def __init__(
+        self,
+        env,
+        seed=0,
+        gain=6.0,
+        theta_center=math.pi / 2.0,
+        theta_deadband=0.08,
+        damping_gain=1.5,
+    ):
+        super().__init__(env=env, seed=seed)
+        self.gain = gain
+        self.theta_center = theta_center
+        self.theta_deadband = theta_deadband
+        self.damping_gain = damping_gain
+
+    def predict(self, observation, deterministic=True):
+        z, z_dot, theta, theta_dot = observation
+        centered_theta = theta - self.theta_center
+
+        # Pump energy away from the middle crossing, then damp near the apex.
+        if abs(centered_theta) < self.theta_deadband:
+            command = self.damping_gain * theta_dot
+        else:
+            command = self.gain * np.sign(centered_theta * theta_dot)
+
+        action = float(np.clip(command, -self.env.max_action, self.env.max_action))
+        return np.array([action], dtype=np.float32), None
+
+    def save(self, path):
+        payload = {
+            "controller_type": self.__class__.__name__,
+            "seed": self.seed,
+            "gain": self.gain,
+            "theta_center": self.theta_center,
+            "theta_deadband": self.theta_deadband,
+            "damping_gain": self.damping_gain,
+        }
+        Path(f"{path}.json").write_text(json.dumps(payload, indent=2))
+
+
 def build_controller(controller_name, env, seed, verbose=1, controller_kwargs=None):
     controller_kwargs = controller_kwargs or {}
     name = controller_name.lower()
@@ -130,6 +172,8 @@ def build_controller(controller_name, env, seed, verbose=1, controller_kwargs=No
         return RandomController(env=env, seed=seed)
     if name == "sinusoidal":
         return SinusoidalController(env=env, seed=seed, **controller_kwargs)
+    if name == "pumping":
+        return PumpingController(env=env, seed=seed, **controller_kwargs)
     raise ValueError(f"Unsupported controller_name: {controller_name}")
 
 

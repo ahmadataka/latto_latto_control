@@ -100,3 +100,32 @@ Metric legend:
 - The default `sinusoidal` controller fails across all tested restitutions and reward variants.
 - `A2C + swing_growth` is strongest at `e = 0.95`.
 - `A2C + z_penalty` is the most persistent performer across the full restitution sweep.
+
+## Additional Baseline Notes
+
+The following additional baselines were tested on Thursday, July 16, 2026:
+
+### random
+
+- Evaluated across `z_penalty` and `swing_growth`, with restitution values `1.0`, `0.95`, `0.9`, and `0.8`.
+- Result:
+  `Alt. = 0` and `Streak = 0` in every tested setting.
+- Interpretation:
+  Random exploration alone does not discover the alternating-impact rhythm in this benchmark.
+
+### pumping
+
+- A hand-designed heuristic that attempts to inject energy based on the sign of the angle and angular velocity, while damping near the middle crossing.
+- Evaluated across `z_penalty` and `swing_growth`, with restitution values `1.0`, `0.95`, `0.9`, and `0.8`.
+- Result:
+  `Alt. = 0` and `Streak = 0` in every tested setting.
+- Interpretation:
+  A simple energy-pumping heuristic is still insufficient to sustain the desired alternating-impact behavior.
+
+### SAC
+
+- An exploratory SAC sweep was attempted on Thursday, July 16, 2026.
+- Status:
+  the long run and a reduced-budget exploratory run were both stopped before a complete first benchmark result was produced.
+- Interpretation:
+  under the current implementation and training budget, SAC appears substantially slower to evaluate in this benchmark than PPO and A2C.

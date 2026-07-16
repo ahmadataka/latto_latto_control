@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument(
         "--controller",
         default="ppo",
-        choices=["ppo", "a2c", "sac", "zero", "random", "sinusoidal"],
+        choices=["ppo", "a2c", "sac", "zero", "random", "sinusoidal", "pumping"],
     )
     parser.add_argument(
         "--reward-variants",
@@ -50,6 +50,9 @@ def parse_args():
     parser.add_argument("--sinusoidal-amplitude", type=float, default=7.5)
     parser.add_argument("--sinusoidal-frequency-hz", type=float, default=1.2)
     parser.add_argument("--sinusoidal-phase", type=float, default=0.0)
+    parser.add_argument("--pumping-gain", type=float, default=6.0)
+    parser.add_argument("--pumping-theta-deadband", type=float, default=0.08)
+    parser.add_argument("--pumping-damping-gain", type=float, default=1.5)
     return parser.parse_args()
 
 
@@ -62,6 +65,22 @@ def build_env(args, reward_variant, restitution):
         reward_variant=reward_variant,
         swing_growth_reward_weight=args.swing_growth_weight,
     )
+
+
+def controller_kwargs_for(args):
+    if args.controller == "sinusoidal":
+        return {
+            "amplitude": args.sinusoidal_amplitude,
+            "frequency_hz": args.sinusoidal_frequency_hz,
+            "phase": args.sinusoidal_phase,
+        }
+    if args.controller == "pumping":
+        return {
+            "gain": args.pumping_gain,
+            "theta_deadband": args.pumping_theta_deadband,
+            "damping_gain": args.pumping_damping_gain,
+        }
+    return {}
 
 
 def main():
@@ -83,11 +102,7 @@ def main():
                     env=env,
                     seed=seed,
                     verbose=args.verbose,
-                    controller_kwargs={
-                        "amplitude": args.sinusoidal_amplitude,
-                        "frequency_hz": args.sinusoidal_frequency_hz,
-                        "phase": args.sinusoidal_phase,
-                    },
+                    controller_kwargs=controller_kwargs_for(args),
                 )
                 train_controller(controller, total_timesteps=args.timesteps)
 
